@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core';
-import { Voronoi } from 'd3-delaunay';
 import { onMounted, shallowRef } from 'vue';
+import { CustomVoronoi } from '../world/delaunay';
 
 const props = defineProps<{
-	voronoi: Voronoi<number>,
+	map: CustomVoronoi,
 	redraw: number
 }>();
 
@@ -19,29 +19,35 @@ watch(() => props.redraw, () => {
 	const ctx = mapRef.value?.getContext('2d');
 	if (!ctx) return;
 
-	redraw(ctx);
+	redraw(ctx, props.map);
 
 });
 
-const redraw = (ctx: CanvasRenderingContext2D) => {
+const edgeToTri = (e: number) => { return Math.floor(e / 3); }
+const nextHalfEdge = (e: number) => { return (e % 3 === 2) ? e - 2 : e + 1; }
+
+const redraw = (ctx: CanvasRenderingContext2D, map: CustomVoronoi) => {
+
+	const { numEdges, flipEdges: halfEdges, centers } = map;
 
 	console.time('draw');
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-	const v = props.voronoi;
 
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+	ctx.lineWidth = 2;
+	ctx.strokeStyle = "black";
 
-	for (let i = v.delaunay.points.length / 2 - 1; i >= 0; i--) {
-
-		ctx.beginPath();
-		ctx.fillStyle = rgb((32 * i) % 255, (8 * i) % 255, (i % 255));
-		v.renderCell(i, ctx);
-
-		ctx.fill();
-
+	for (let e = 0; e < numEdges; e++) {
+		if (e < halfEdges[e]) {
+			const p = centers[edgeToTri(e)];
+			const q = centers[edgeToTri(halfEdges[e])];
+			ctx.beginPath();
+			ctx.moveTo(p.x, p.y);
+			ctx.lineTo(q.x, q.y);
+			ctx.stroke();
+		}
 	}
 
 	console.timeEnd('draw');
-
 
 }
 
@@ -58,7 +64,7 @@ const resizeDraw = () => {
 	const ctx = elm.getContext('2d');
 	if (!ctx) return;
 
-	redraw(ctx);
+	//redraw(ctx, props.map);
 }
 
 useEventListener(window, 'resize', resizeDraw);
