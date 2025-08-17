@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core';
 import { onMounted, shallowRef } from 'vue';
-import { CustomVoronoi } from '../world/delaunay';
+import { CustomVoronoi } from '../world/custom-delaunay';
 
 const props = defineProps<{
 	map: CustomVoronoi,

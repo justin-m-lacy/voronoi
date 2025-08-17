@@ -29,7 +29,7 @@ export const MaxRain = 1500;
  */
 export type BiomeData = Required<RawBiomeData> & { color: string };
 
-export const Biomes: Partial<Record<string, BiomeData>> = Object.create(null);
+export const Biomes: Record<string, BiomeData> = Object.create(null);
 
 export const ParseBiomes = async () => {
 

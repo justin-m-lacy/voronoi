@@ -26,9 +26,6 @@ watch(() => props.data, (data) => {
 	<div ref="elRef"
 		 class="absolute w-40 h-20 p-1
 			bg-gray-200 border rounded-xs">
-
 		<div class="flex">{{ data.biome.id }}</div>
-		<input type="color">
-
 	</div>
 </template>

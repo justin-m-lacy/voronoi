@@ -9,61 +9,96 @@ export type TPoint = { x: number, y: number }
 
 export type MapPoint = TPoint & { biome: BiomeData };
 
+type Rands = ReturnType<typeof buildRandoms>;
 
 ParseBiomes();
 
+
+const getTemp = (pt: TPoint, map: (x: number, y: number) => number) => {
+	return MinTemp + (MaxTemp - MinTemp) * (map(pt.x, pt.y) + 1) / 2;
+}
+const getRain = (pt: TPoint, map: (x: number, y: number) => number) => {
+	return MinRain + (MaxRain - MinRain) * (map(pt.x, pt.y) + 1) / 2;
+}
+
 export function MapGen({ seed, width, height, tileSize = 1 }: { seed: string, tileSize?: number, width: number, height: number }) {
 
-	const temps = createNoise2D(alea(seed + 'temp'));
-	const rains = createNoise2D(alea(seed + 'rain'));
+	const rands = buildRandoms(seed);
+	const points = rebuild(width, height, tileSize, rands) as MapPoint[];
 
-	const getTemp = (pt: TPoint) => {
-		return MinTemp + (MaxTemp - MinTemp) * (temps(pt.x, pt.y) + 1) / 2;
+	return {
+		rands,
+		points: rebuild(width, height, tileSize, rands),
+		voronoi: VoronoiMap({ points, width, height, tileSize }),
+		randomize() {
+
+			this.rands = buildRandoms(window.crypto.getRandomValues(new Uint8Array(64)));
+			const pts = rebuild(width, height, tileSize, this.rands, this.points);
+
+			// to avoid knowledge of delaunay point structure, provide initial array
+			// in delaunay constructor.
+			const dpoints = this.voronoi.delaunay.points as any as Int32Array | Float64Array;
+
+			for (let i = 0; i < pts.length; i++) {
+				// update delaunay points.
+				dpoints[2 * i] = pts[i].x;
+				dpoints[2 * i + 1] = pts[i].y;
+
+			}
+
+			this.voronoi.update();
+
+		}
 	}
-	const getRain = (pt: TPoint) => {
-		return MinRain + (MaxRain - MinRain) * (rains(pt.x, pt.y) + 1) / 2;
+
+}
+
+function buildRandoms(seed: string | Uint8Array) {
+	return {
+		temps: createNoise2D(alea(seed + 'temp')),
+		rains: createNoise2D(alea(seed + 'rain')),
+		points: alea(seed + 'pts')
 	}
 
-	const ptRand = alea(seed + 'pts');
+}
 
-	const points = genPoints(ptRand, width, height, tileSize) as MapPoint[];
-	const map = VoronoiMap({ points, rand: ptRand, width, height, tileSize });
+function rebuild(width: number, height: number, tileSize: number, rands: Rands,
+	points: MapPoint[] = []) {
+
+	randPoints<MapPoint>(rands.points, width, height, tileSize, points);
 
 	for (let i = 0; i < points.length; i++) {
 
-		const temp = getTemp(points[i]);
-		const rain = getRain(points[i]);
+		const temp = getTemp(points[i], rands.temps);
+		const rain = getRain(points[i], rands.rains);
 		points[i].biome = MatchBiome(temp, rain);
 
 	}
 
-	return {
-		points,
-		...map
-	}
+	return points;
 
 }
 
-const rgb = (r: number, g: number, b: number) => {
-	return `rgb(${r},${g},${b})`
-}
 
+function randPoints<T extends TPoint>(
+	rand: () => number, width: number, height: number, tileSize: number,
+	pts: T[]) {
 
-function genPoints<T extends TPoint = TPoint>(
-	rand: () => number, width: number, height: number, tileSize: number) {
+	const jitter = 0.5;
 
-	const pts: T[] = [];
-	const jitter = 0.6;
+	pts.length = width * height;
 
 	// stores points in consecutive x,y coods.
+	let ind: number = 0;
 	for (let x = 0; x < width; x++) {
 
 		for (let y = 0; y < height; y++) {
 
-			pts.push({
+			pts[ind++] = {
 				x: tileSize * (x + jitter * (rand() - rand())),
 				y: tileSize * (y + jitter * (rand() - rand()))
-			} as T);
+			} as T;
+
 		}
 
 
