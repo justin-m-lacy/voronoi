@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { TMap } from '@/world/mapgen';
+import { WorldMap } from '@/world/world-map';
 import { useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
 import { MapPoint } from '../world/mapgen';
 
 const props = defineProps<{
-	map: TMap,
+	map: WorldMap,
 	redraw: number
 }>();
 
@@ -16,7 +16,7 @@ const emits = defineEmits<{
 /**
  * Data of each map tile.
  */
-const cellData = ref<{ pt: MapPoint, data: string }[]>();
+const cellData = shallowRef<{ pt: MapPoint, data: string }[]>();
 
 const redraw = () => {
 

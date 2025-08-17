@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import Map from '@/view/Map.vue';
 import BiomeEditor from '@/view/panes/BiomeEditor.vue';
+import MapSettings from '@/view/panes/MapSettings.vue';
 import TileInfo from '@/view/TileInfo.vue';
 import { Biomes } from '@/world/biomes';
-import { MapGen, MapPoint } from '@/world/mapgen';
+import { MapPoint } from '@/world/mapgen';
+import { WorldMap } from '@/world/world-map';
 import { onKeyDown } from '@vueuse/core';
 import { onBeforeMount } from 'vue';
-const world = MapGen({
+
+const world = new WorldMap({
 	seed: 'testmap',
 	width: 8,
 	height: 8,
@@ -23,7 +26,6 @@ onBeforeMount(() => {
 });
 
 const onBiomeChange = () => {
-	console.log(`biome change`);
 	redraw.value++;
 }
 onKeyDown(' ', (_ => {
@@ -39,7 +41,11 @@ onKeyDown(' ', (_ => {
 			 @select="select = $event" />
 
 		<TileInfo v-if="select" :data="select" />
-		<BiomeEditor class="z-10" :biomes="Biomes" @changed="onBiomeChange" />
+
+		<div class="flex flex-col z-10">
+			<MapSettings :map="world" />
+			<BiomeEditor :biomes="Biomes" @changed="onBiomeChange" />
+		</div>
 	</div>
 
 </template>
