@@ -1,4 +1,9 @@
 import { Delaunay } from 'd3-delaunay';
+
+function expect(p: boolean) {
+	if (!p) throw new Error('Expect failed');
+}
+
 /**
  * 
  * @param rand - random number generator.
@@ -14,16 +19,13 @@ export function VoronoiMap<T extends { x: number, y: number }>({ points, rand, w
 
 	const delaunay = Delaunay.from(points, p => p.x, p => p.y);
 
-
-	console.log(`points: ${points.length}`);
-	console.log(`halfedges: ${delaunay.halfedges.length}`);
+	expect(delaunay.points.length == 2 * points.length);
 
 	return {
 		randomize() {
-			randomize(rand, width, height, tileSize, this.points);
+			randomize(rand, width, height, tileSize, points);
 			this.voronoi.update()
 		},
-		points,
 		delaunay,
 		voronoi: delaunay.voronoi()
 	}
@@ -34,7 +36,7 @@ export function VoronoiMap<T extends { x: number, y: number }>({ points, rand, w
 function randomize(rand: () => number, width: number, height: number, tileSize: number,
 	pts: { x: number, y: number }[]) {
 
-	const jitter = 0.2 * tileSize;
+	const jitter = 0.2;
 
 	// stores points in consecutive x,y coods.
 	let ind: number = 0;

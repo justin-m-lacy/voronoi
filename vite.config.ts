@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import autoImport from 'unplugin-auto-import/vite';
@@ -56,6 +57,8 @@ export default async function ({ mode, command }) {
     },
 
     plugins: [
+
+      tailwindcss(),
 
       vue(),
 

@@ -3,60 +3,60 @@
         "id": "forest",
         "temp": 60,
         "rain": 100,
-        "color": "25a01c"
+        "color": "#25a01c"
     },
     {
         "id": "plains",
         "temp": 50,
         "rain": 50,
-        "color": "dbd64a"
+        "color": "#dbd64a"
     },
     {
         "id": "tundra",
         "temp": 20,
         "rain": 30,
-        "color": "87afba"
+        "color": "#87afba"
     },
     {
         "id": "jungle",
         "temp": 80,
         "rain": 1000,
-        "color": "bdd820"
+        "color": "#bdd820"
     },
     {
         "id": "rainforest",
         "temp": 77,
         "rain": 1300,
-        "color": "25a01c"
+        "color": "#25a01c"
     },
     {
         "id": "desert",
         "temp": 75,
         "rain": 12,
-        "color": "d1c349"
+        "color": "#d1c349"
     },
     {
         "id": "arctic",
         "temp": 10,
         "rain": 10,
-        "color": "f7f8f9"
+        "color": "#f7f8f9"
     },
     {
         "id": "hills",
         "temp": 50,
         "rain": 40,
-        "color": "749180"
+        "color": "#749180"
     },
     {
         "id": "mountains",
         "temp": 40,
         "rain": 50,
-        "color": "9c9fa3"
+        "color": "#9c9fa3"
     },
     {
         "id": "swamp",
         "temp": 70,
         "rain": 150,
-        "color": "68997e"
+        "color": "#68997e"
     }
 ]

@@ -12,7 +12,9 @@ type RawBiomeData = {
 	/**
 	 * Rainfall given in centimeters.
 	 */
-	rain?: number
+	rain?: number,
+
+	color?: string
 }
 
 export const MinTemp = -20;
@@ -23,10 +25,9 @@ export const MaxRain = 1500;
 
 
 /**
- * @property BiomeData.r - start of random perlin range.
  * computed dynamically on load.
  */
-export type BiomeData = Required<RawBiomeData> & { r: number };
+export type BiomeData = Required<RawBiomeData> & { color: string };
 
 export const Biomes: Partial<Record<string, BiomeData>> = Object.create(null);
 
@@ -41,7 +42,7 @@ export const ParseBiomes = async () => {
 		Biomes[data.id] = {
 			id: data.id,
 			w: (data as any).n ?? 50,
-			r: 0,
+			color: data.color ?? 'red',
 			temp: data.temp ?? 60,
 			rain: data.rain ?? 100
 		};
@@ -54,12 +55,13 @@ export const ParseBiomes = async () => {
 
 /**
  * Find biome matching properties.
+ * KD-tree unnecessary for small values.
  * @param temp 
  * @param rain 
  */
 export const MatchBiome = (temp: number, rain: number) => {
 
-	let best: number = -Infinity;
+	let best: number = Infinity;
 	let biome: BiomeData = Biomes['forest']!;
 
 	for (const k in Biomes) {
@@ -74,7 +76,7 @@ export const MatchBiome = (temp: number, rain: number) => {
 
 	}
 
-	console.log(`temp: ${temp} rain: ${rain} best: ${biome.id}  v: ${best}`);
+	//console.log(`temp: ${temp} rain: ${rain} best: ${biome?.id}  v: ${best}`);
 	return biome;
 
 }

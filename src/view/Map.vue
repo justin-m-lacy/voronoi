@@ -1,64 +1,55 @@
 <script setup lang="ts">
+import { TMap } from '@/world/mapgen';
 import { useEventListener } from '@vueuse/core';
-import { Voronoi } from 'd3-delaunay';
 import { onMounted, shallowRef } from 'vue';
+import { MapPoint } from '../world/mapgen';
 
 const props = defineProps<{
-	voronoi: Voronoi<number>,
+	map: TMap,
 	redraw: number
 }>();
 
-const mapRef = shallowRef<HTMLCanvasElement>();
+const emits = defineEmits<{
+	(e: 'select', pt: MapPoint | null): void;
+}>();
 
-const rgb = (r: number, g: number, b: number) => {
-	return `rgb(${r},${g},${b})`
-}
+/**
+ * Data of each map tile.
+ */
+const cellData = shallowRef<{ pt: MapPoint, data: string }[]>();
 
-watch(() => props.redraw, () => {
-
-	const ctx = mapRef.value?.getContext('2d');
-	if (!ctx) return;
-
-	redraw(ctx);
-
-});
-
-const redraw = (ctx: CanvasRenderingContext2D) => {
+const redraw = () => {
 
 	console.time('draw');
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-	const v = props.voronoi;
+
+	const points = props.map.points;
+	const voron = props.map.voronoi;
+
+	console.log(`range: ${voron.xmin},${voron.xmax} => ${voron.ymin},${voron.ymax}`)
+	voron.xmin = -100;
+	voron.xmax = 10000;
+	voron.ymin = -1000;
+	voron.ymax = 10000;
 
 
-	for (let i = v.delaunay.points.length / 2 - 1; i >= 0; i--) {
+	const cells: { pt: MapPoint, data: string }[] = [];
 
-		ctx.beginPath();
-		ctx.fillStyle = rgb((32 * i) % 255, (8 * i) % 255, (i % 255));
-		v.renderCell(i, ctx);
+	for (let i = points.length / 2 - 1; i >= 0; i--) {
 
-		ctx.fill();
+		cells.push({ pt: points[i], data: voron.renderCell(i) });
 
 	}
+
+	cellData.value = cells;
 
 	console.timeEnd('draw');
 
 
 }
+watch(() => props.redraw, redraw);
 
 const resizeDraw = () => {
-	const elm = mapRef.value!;
-	if (!elm) {
-		console.warn(`no canvas element.`);
-		return;
-	}
-
-	elm.width = window.innerWidth;
-	elm.height = window.innerHeight;
-
-	const ctx = elm.getContext('2d');
-	if (!ctx) return;
-
-	redraw(ctx);
+	redraw();
 }
 
 useEventListener(window, 'resize', resizeDraw);
@@ -68,7 +59,13 @@ onMounted(() => {
 });
 </script>
 <template>
-	<canvas ref="mapRef" width="">
-	</canvas>
+	<div>
+		<svg class="max-w-100 max-h-100 w-full h-full flex" width="100" height="100"
+			 preserveAspectRatio="xMidYMid meet">
+
+			<path v-for="cell in cellData" :d="cell.data" :fill="cell.pt.biome.color"
+				  @mouseover="emits('select', cell.pt)" />
+		</svg>
+	</div>
 
 </template>

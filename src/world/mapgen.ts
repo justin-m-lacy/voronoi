@@ -1,4 +1,4 @@
-import { BiomeData, MatchBiome, MaxRain, MaxTemp, MinRain, MinTemp } from '@/world/biomes';
+import { BiomeData, MatchBiome, MaxRain, MaxTemp, MinRain, MinTemp, ParseBiomes } from '@/world/biomes';
 import { VoronoiMap } from '@/world/d3-delaunay';
 import alea from 'alea';
 import { createNoise2D } from 'simplex-noise';
@@ -7,10 +7,10 @@ import { createNoise2D } from 'simplex-noise';
 export type TMap = ReturnType<typeof MapGen>;
 export type TPoint = { x: number, y: number }
 
-type BiomePoint = TPoint & { biome: BiomeData };
+export type MapPoint = TPoint & { biome: BiomeData };
 
 
-
+ParseBiomes();
 
 export function MapGen({ seed, width, height, tileSize = 1 }: { seed: string, tileSize?: number, width: number, height: number }) {
 
@@ -26,7 +26,7 @@ export function MapGen({ seed, width, height, tileSize = 1 }: { seed: string, ti
 
 	const ptRand = alea(seed + 'pts');
 
-	const points = genPoints(ptRand, width, height, tileSize) as BiomePoint[];
+	const points = genPoints(ptRand, width, height, tileSize) as MapPoint[];
 	const map = VoronoiMap({ points, rand: ptRand, width, height, tileSize });
 
 	for (let i = 0; i < points.length; i++) {
@@ -37,16 +37,8 @@ export function MapGen({ seed, width, height, tileSize = 1 }: { seed: string, ti
 
 	}
 
-	const colors: string[] = new Array(map.points.length / 2);
-	for (let i = 0; i < colors.length; i++) {
-		const red = 128 + 128 * Math.random();
-		const blue = 128 + 128 * Math.random();
-		const green = 128 + 128 * Math.random();
-		colors[i] = rgb(red, green, blue)
-	}
-
 	return {
-		colors,
+		points,
 		...map
 	}
 
@@ -61,7 +53,7 @@ function genPoints<T extends TPoint = TPoint>(
 	rand: () => number, width: number, height: number, tileSize: number) {
 
 	const pts: T[] = [];
-	const jitter = 0.2;
+	const jitter = 0.6;
 
 	// stores points in consecutive x,y coods.
 	for (let x = 0; x < width; x++) {
