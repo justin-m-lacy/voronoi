@@ -10,7 +10,7 @@ const emit = defineEmits<{
 
 </script>
 <template>
-	<div class="flex flex-col items-center shrink min-w-24 bg-white p-1">
+	<div class="flex flex-col items-center shrink">
 		<div v-for="b in biomes">
 			<div class="font-semibold text-sm">{{ b.id }}</div>
 			<input type="color" v-model="b.color"
