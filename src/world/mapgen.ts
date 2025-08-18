@@ -13,12 +13,14 @@ export type Rands = ReturnType<typeof buildRandoms>;
 
 ParseBiomes();
 
+const TempScale = 1200;
+const RainScale = 1500;
 
 export const getTemp = (pt: TPoint, map: (x: number, y: number) => number) => {
-	return MinTemp + (MaxTemp - MinTemp) * (map(pt.x, pt.y) + 1) / 2;
+	return MinTemp + (MaxTemp - MinTemp) * (map(pt.x / TempScale, pt.y / TempScale) + 1) / 2;
 }
 export const getRain = (pt: TPoint, map: (x: number, y: number) => number) => {
-	return MinRain + (MaxRain - MinRain) * (map(pt.x, pt.y) + 1) / 2;
+	return MinRain + (MaxRain - MinRain) * (map(pt.x / RainScale, pt.y / RainScale) + 1) / 2;
 }
 
 export function BuildMap({ seed, width, height, tileSize = 1 }: { seed: string, tileSize?: number, width: number, height: number }) {

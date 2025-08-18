@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { MapPoint } from '@/world/mapgen';
 import { useElementSize } from '@vueuse/core';
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
+	cells: Array<{ pt: MapPoint, data: string }>,
 	tx?: number,
 	ty?: number,
 	scale?: number
@@ -11,22 +13,22 @@ withDefaults(defineProps<{
 	scale: 1
 });
 
+const svgEl = shallowRef<SVGElement>();
+
 const emit = defineEmits<{
-	(e: 'dblclick', evt: MouseEvent, pt: TPoint): void;
-	(e: 'clickPoint', evt: MouseEvent, pt: TPoint): void
+	(e: 'rollover', pt: MapPoint): void;
+	(e: 'clickPoint', evt: MouseEvent, pt: { x: number, y: number }): void
 }>();
 
-const svgRef = ref<SVGElement>();
 
-const { width, height } = useElementSize(svgRef);
+const { width, height } = useElementSize(svgEl);
 </script>
 <template>
-	<svg ref="svgRef" class="absolute w-full h-full"
+	<svg class="absolute w-full h-full" ref="svgEl" preserveAspectRatio="xMinYMin"
 		 :viewBox="`${-(0.5 * width / scale) - tx} ${-(0.5 * height) / scale - ty} ${width / scale} ${height / scale}`">
 
-		<path v-for="(cell, ind) in cellData" :d="cell.data" :key="cell.pt.x + ',' + cell.pt.y"
+		<path v-for="(cell, ind) in cells" :d="cell.data" :key="ind"
 			  :fill="cell.pt.biome.color"
-			  @mouseover="emits('select', cell.pt)" />
-
+			  @mouseover="emit('rollover', cell.pt)" />
 	</svg>
 </template>

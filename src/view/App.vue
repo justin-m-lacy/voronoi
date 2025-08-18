@@ -11,8 +11,8 @@ import { onBeforeMount } from 'vue';
 
 const world = new WorldMap({
 	seed: 'testmap',
-	cols: 32,
-	rows: 32,
+	cols: 124,
+	rows: 124,
 	tileSize: 72,
 
 });
@@ -39,8 +39,8 @@ useEventListener('keydown', (evt => {
 </script>
 <template>
 
-	<div class="w-full h-full flex justify-end">
-		<MapView class="absolute w-full h-full z-0" :map="world" :redraw="redraw"
+	<div class="w-full h-full flex justify-end overflow-hidden">
+		<MapView class="absolute w-full h-full z-0 overflow-hidden" :map="world" :redraw="redraw"
 				 @select="select = $event" />
 
 		<TileInfo v-if="select" :data="select" />
