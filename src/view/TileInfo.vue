@@ -3,23 +3,18 @@ import { positionElm } from '@/util/dom';
 import { MapPoint } from '@/world/mapgen';
 
 const props = defineProps<{
-	data: MapPoint
+	data: MapPoint,
+	at: { x: number, y: number }
 }>();
 
 const elRef = shallowRef<HTMLDivElement>();
-watch(() => props.data, (data) => {
+watch(() => props.at, (at) => {
 
 	nextTick(() => {
 		if (!elRef.value) return;
-
-		const rect = elRef.value.parentElement!.getBoundingClientRect()!;
-		const px = (data.x + 0) * 1;
-		const py = (data!.y + 0) * 1;
-
-		positionElm(elRef.value, px, py);
+		positionElm(elRef.value, at);
 
 	});
-
 }, { immediate: true, deep: true });
 </script>
 <template>

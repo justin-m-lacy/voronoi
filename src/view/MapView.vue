@@ -12,8 +12,8 @@ const props = defineProps<{
 	redraw: number
 }>();
 
-const emits = defineEmits<{
-	(e: 'select', pt: MapPoint | null): void;
+const emit = defineEmits<{
+	(e: 'cellOver', pt: MapPoint, at: { x: number, y: number }): void;
 }>();
 
 const container = shallowRef<HTMLElement>();
@@ -77,6 +77,12 @@ const onWheel = (e: WheelEvent) => {
 
 }
 
+const onCellOver = (data: MapPoint, evt: MouseEvent) => {
+	emit('cellOver', data, {
+		x: evt.clientX,
+		y: evt.clientY
+	})
+}
 
 useEventListener(window, 'resize', rebound);
 
@@ -86,7 +92,8 @@ onMounted(() => {
 </script>
 <template>
 	<div ref="container" class="w-full h-full" @wheel.prevent="onWheel">
-		<MapSvg :cells="mapCells" :tx="viewStore.tx" :ty="viewStore.ty" :scale="viewStore.scale" />
+		<MapSvg :cells="mapCells" :tx="viewStore.tx" :ty="viewStore.ty" :scale="viewStore.scale"
+				@cellOver="onCellOver" />
 	</div>
 
 </template>

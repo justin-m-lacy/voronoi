@@ -18,7 +18,10 @@ const world = new WorldMap({
 });
 
 const redraw = ref(0);
-const select = shallowRef<MapPoint | null>(null)
+const rollInfo = shallowRef<{
+	data: MapPoint,
+	at: { x: number, y: number }
+} | null>(null);
 
 
 onBeforeMount(() => {
@@ -28,6 +31,14 @@ onBeforeMount(() => {
 const onBiomeChange = () => {
 	redraw.value++;
 }
+const onCellOver = (cell: MapPoint, at: { x: number, y: number }) => {
+
+	rollInfo.value = {
+		data: cell,
+		at
+	};
+}
+
 useEventListener('keydown', (evt => {
 
 	if (evt.key == ' ') {
@@ -40,10 +51,11 @@ useEventListener('keydown', (evt => {
 <template>
 
 	<div class="w-full h-full flex justify-end overflow-hidden">
-		<MapView class="absolute w-full h-full z-0 overflow-hidden" :map="world" :redraw="redraw"
-				 @select="select = $event" />
+		<MapView class="absolute w-full h-full z-0 overflow-hidden"
+				 :map="world" :redraw="redraw"
+				 @cellOver="onCellOver" />
 
-		<TileInfo v-if="select" :data="select" />
+		<TileInfo class="z-10" v-if="rollInfo" :data="rollInfo.data" :at="rollInfo.at" />
 
 		<div class="flex flex-col z-10 min-w-20 bg-white/80">
 			<MapSettings :map="world" />
