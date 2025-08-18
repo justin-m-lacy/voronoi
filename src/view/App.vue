@@ -11,8 +11,12 @@ import { onBeforeMount } from 'vue';
 
 const world = new WorldMap({
 	seed: 'testmap',
-	cols: 124,
-	rows: 124,
+	range: {
+		xmin: -512,
+		xmax: 512,
+		ymin: -256,
+		ymax: 512
+	},
 	tileSize: 72,
 
 });

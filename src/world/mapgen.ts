@@ -1,4 +1,5 @@
 import { BiomeData, MaxRain, MaxTemp, MinRain, MinTemp, ParseBiomes } from '@/world/biomes';
+import { TRange } from '@/world/world-map';
 import alea from 'alea';
 import { Delaunay } from 'd3-delaunay';
 import { createNoise2D } from 'simplex-noise';
@@ -60,23 +61,30 @@ export function buildRandoms(seed: string | Uint8Array) {
 
 }
 
-export function placePoints<T extends TPoint>(
-	rand: () => number, cols: number, rows: number, tileSize: number,
-	pts: T[]) {
+export function genPoints<T extends TPoint>(
+	rand: () => number, range: TRange, tileSize: number,
+	pts: Map<string, T>) {
 
 	const jitter = 0.5;
 
-	pts.length = cols * rows;
+	// generate on tileSize boundaries so the map generates
+	// deterministically from any position.
+	const rstart = Math.floor(range.ymin / tileSize);
+	const rend = Math.floor(range.ymax / tileSize);
 
+	const cstart = Math.floor(range.xmin / tileSize);
+	const cend = Math.floor(range.xmax / tileSize);
+
+	console.log(`row: ${rstart}->${rend}  col: ${cstart}->${cend}`)
 	// stores points in consecutive x,y coods.
-	let ind: number = 0;
-	for (let row = 0; row < rows; row++) {
-		for (let col = 0; col < cols; col++) {
+	for (let row = rstart; row <= rend; row++) {
 
-			pts[ind++] = {
+		for (let col = cstart; col <= cend; col++) {
+
+			pts.set(row + ',' + col, {
 				x: tileSize * (col + jitter * (rand() - rand())),
 				y: tileSize * (row + jitter * (rand() - rand()))
-			} as T;
+			} as T);
 
 		}
 

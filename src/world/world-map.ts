@@ -1,5 +1,5 @@
 import { BiomeData, MatchBiome } from '@/world/biomes';
-import { buildRandoms, getRain, getTemp, placePoints, TPoint } from '@/world/mapgen';
+import { buildRandoms, genPoints, getRain, getTemp, TPoint } from '@/world/mapgen';
 import alea from 'alea';
 import { Delaunay, Voronoi } from 'd3-delaunay';
 import { createNoise2D } from 'simplex-noise';
@@ -7,22 +7,28 @@ import { createNoise2D } from 'simplex-noise';
 export type MapPoint = TPoint & { biome: BiomeData };
 type Rands = ReturnType<typeof buildRandoms>;
 
+export type TRange = { xmin: number, xmax: number, ymin: number, ymax: number };
+
 export class WorldMap {
 
-	readonly points: MapPoint[];
+	/**
+	 * Maps "x,y" coordinates to a cell-point near x,y.
+	 * Uses a record to allow negative coordinates.
+	 */
+	readonly points: Map<string, MapPoint> = new Map();
 
-	cols: number;
-	rows: number;
 	tileSize: number;
 
 	seed: string;
 
 	rands: Rands;
 
+	range: TRange;
+
 	delaunay: Delaunay<MapPoint>;
 
-	get maxWidth() { return (this.cols) * this.tileSize }
-	get maxHeight() { return (this.rows) * this.tileSize }
+	get maxWidth() { return this.range.xmax - this.range.xmin }
+	get maxHeight() { return this.range.ymax - this.range.ymin }
 
 	get voronoi() {
 		return this._voronoi ??= this.delaunay.voronoi()
@@ -30,32 +36,30 @@ export class WorldMap {
 
 	private _voronoi: Voronoi<MapPoint> | null = null;
 
-	constructor({ seed, cols, rows, tileSize = 1 }: { seed: string, tileSize?: number, cols: number, rows: number }) {
+	constructor({ seed, range, tileSize = 1 }: { seed: string, tileSize?: number, range: TRange }) {
 
-		this.cols = cols;
-		this.rows = rows;
 		this.tileSize = tileSize;
 		this.seed = seed;
 
-		this.rands = this.initRandoms(seed);
-		this.points = this.buildPoints(this.rands, cols, rows, tileSize);
+		this.range = range;
 
-		const arr = new Int32Array(2 * this.points.length);
-		this.fillCoords(this.points, arr);
+		this.rands = this.initRandoms(seed);
+		this.buildPoints(this.rands, range, tileSize);
+
+		const arr = new Int32Array(2 * this.points.size);
+		this.fillCoords(this.points.values(), arr);
 		this.delaunay = new Delaunay(arr);
 
 	}
 
 	rebuild() {
 
-		const pts = this.points;
+		this.buildPoints(this.rands, this.range, this.tileSize);
 
-		this.buildPoints(this.rands, this.cols, this.rows, this.tileSize, pts);
-
-		if (this.delaunay.points.length != 2 * this.points.length) {
-			this.delaunay.points = new Int32Array(2 * this.points.length);
+		if (this.delaunay.points.length != 2 * this.points.size) {
+			this.delaunay.points = new Int32Array(2 * this.points.size);
 		}
-		this.fillCoords(this.points, this.delaunay.points as Int32Array);
+		this.fillCoords(this.points.values(), this.delaunay.points as Int32Array);
 
 		this.voronoi.update();
 
@@ -75,14 +79,13 @@ export class WorldMap {
 	/**
 	 * Fill coordinates of Delaunay point-array
 	 */
-	private fillCoords<T extends TPoint>(pts: T[], arr: Int32Array) {
+	private fillCoords<T extends TPoint>(pts: Iterable<T>, arr: Int32Array) {
 
 		let ind: number = 0;
-		for (let i = 0; i < pts.length; i++) {
+		for (const p of pts) {
 			// update delaunay points.
-			arr[ind++] = pts[i].x;
-			arr[ind++] = pts[i].y;
-
+			arr[ind++] = p.x;
+			arr[ind++] = p.y;
 		}
 
 	}
@@ -96,20 +99,17 @@ export class WorldMap {
 
 	}
 
-	private buildPoints(rands: Rands, cols: number, rows: number,
-		size: number, points: MapPoint[] = []) {
+	private buildPoints(rands: Rands, range: TRange, tileSize: number) {
 
-		placePoints<MapPoint>(rands.points, cols, rows, size, points);
+		genPoints<MapPoint>(rands.points, range, tileSize, this.points);
 
-		for (let i = 0; i < points.length; i++) {
+		for (const p of this.points.values()) {
 
-			const temp = getTemp(points[i], rands.temps);
-			const rain = getRain(points[i], rands.rains);
-			points[i].biome = MatchBiome(temp, rain);
+			const temp = getTemp(p, rands.temps);
+			const rain = getRain(p, rands.rains);
+			p.biome = MatchBiome(temp, rain);
 
 		}
-
-		return points;
 
 	}
 

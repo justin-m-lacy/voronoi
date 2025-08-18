@@ -38,10 +38,10 @@ function rebound() {
 
 	const vor = props.map.voronoi;
 
-	vor.xmin = 0;
-	vor.xmax = Math.min(-viewStore.tx + rect.width / viewStore.scale, props.map.maxWidth);
-	vor.ymin = 0;
-	vor.ymax = Math.min(-viewStore.ty + rect.height / viewStore.scale, props.map.maxHeight);
+	vor.xmin = props.map.range.xmin;
+	vor.xmax = props.map.range.xmax;
+	vor.ymin = props.map.range.ymin;
+	vor.ymax = props.map.range.ymax;
 
 	redraw();
 
@@ -51,13 +51,17 @@ const redraw = () => {
 
 	//console.time('draw');
 
-	const points = props.map.points;
-	const vor = props.map.voronoi;
+	const mapPts = props.map.points;
 
+	const vor = props.map.voronoi;
 	const cells: { pt: MapPoint, data: string }[] = [];
 
-	for (let i = points.length / 2 - 1; i >= 0; i--) {
-		cells.push({ pt: points[i], data: vor.renderCell(i) });
+	let ind = 0;
+	for (const p of mapPts.values()) {
+
+		cells.push({ pt: p, data: vor.renderCell(ind) });
+		ind++;
+
 	}
 	console.log(`cells count: ${cells.length}`);
 	mapCells.value = cells;

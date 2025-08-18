@@ -22,11 +22,11 @@ function copySeed(str: string) {
 		</div>
 		<div class="flex gap-x-1 items-center">
 			<label for="mapwidth">width</label>
-			<input type="number" id="mapwidth" class="text-sm p-0.5 w-12" v-model="map.cols" min="10"
+			<input type="number" id="mapwidth" class="text-sm p-0.5 w-12" v-model="map.range.xmax" min="10"
 				   @changed="emit('resize')">
 			<label for="mapheight">height</label>
 			<input type="number" id="mapheight" class="text-sm p-0.5 w-12"
-				   v-model="map.rows" min="10"
+				   v-model="map.range.ymax" min="10"
 				   @changed="emit('resize')">
 
 		</div>
