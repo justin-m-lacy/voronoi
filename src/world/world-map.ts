@@ -1,11 +1,8 @@
-import { BiomeData, MatchBiome } from '@/world/biomes';
-import { buildRandoms, genPoints, getRain, getTemp, TPoint } from '@/world/mapgen';
-import alea from 'alea';
+import { BiomeData, BiomeSampler, buildSamplers, MatchBiome } from '@/world/biomes';
+import { genPoints, TPoint } from '@/world/mapgen';
 import { Delaunay, Voronoi } from 'd3-delaunay';
-import { createNoise2D } from 'simplex-noise';
 
 export type MapPoint = TPoint & { biome: BiomeData };
-type Rands = ReturnType<typeof buildRandoms>;
 
 export type TRange = { xmin: number, xmax: number, ymin: number, ymax: number };
 
@@ -21,7 +18,7 @@ export class WorldMap {
 
 	seed: string;
 
-	rands: Rands;
+	rands: BiomeSampler;
 
 	range: TRange;
 
@@ -43,7 +40,7 @@ export class WorldMap {
 
 		this.range = range;
 
-		this.rands = this.initRandoms(seed);
+		this.rands = buildSamplers(seed);
 		this.buildPoints(this.rands, range, tileSize);
 
 		const arr = new Int32Array(2 * this.points.size);
@@ -70,7 +67,7 @@ export class WorldMap {
 
 		this.seed = btoa(
 			String.fromCharCode(...window.crypto.getRandomValues(new Uint8Array(64))));
-		this.rands = buildRandoms(this.seed);
+		this.rands = buildSamplers(this.seed);
 		this.rebuild();
 
 
@@ -90,24 +87,16 @@ export class WorldMap {
 
 	}
 
-	private initRandoms(seed: string | Uint8Array) {
-		return {
-			temps: createNoise2D(alea(seed + 'temp')),
-			rains: createNoise2D(alea(seed + 'rain')),
-			points: alea(seed + 'pts')
-		}
-
-	}
-
-	private buildPoints(rands: Rands, range: TRange, tileSize: number) {
+	private buildPoints(rands: BiomeSampler, range: TRange, tileSize: number) {
 
 		genPoints<MapPoint>(rands.points, range, tileSize, this.points);
 
 		for (const p of this.points.values()) {
 
-			const temp = getTemp(p, rands.temps);
-			const rain = getRain(p, rands.rains);
-			p.biome = MatchBiome(temp, rain);
+			const elev = rands.elev(p.x, p.y);
+			const temp = rands.temp(p.x, p.y);
+			const rain = rands.rain(p.x, p.y);
+			p.biome = MatchBiome(temp, rain, elev);
 
 		}
 

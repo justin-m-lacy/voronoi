@@ -7,15 +7,14 @@ import { Biomes } from '@/world/biomes';
 import { MapPoint } from '@/world/mapgen';
 import { WorldMap } from '@/world/world-map';
 import { useEventListener } from '@vueuse/core';
-import { onBeforeMount } from 'vue';
 
 const world = new WorldMap({
 	seed: 'testmap',
 	range: {
-		xmin: -512,
-		xmax: 512,
-		ymin: -256,
-		ymax: 512
+		xmin: -window.innerWidth / 2,
+		xmax: window.innerWidth / 2,
+		ymin: -window.innerHeight / 2,
+		ymax: window.innerHeight / 2
 	},
 	tileSize: 72,
 
@@ -26,11 +25,6 @@ const rollInfo = shallowRef<{
 	data: MapPoint,
 	at: { x: number, y: number }
 } | null>(null);
-
-
-onBeforeMount(() => {
-
-});
 
 const onBiomeChange = () => {
 	redraw.value++;

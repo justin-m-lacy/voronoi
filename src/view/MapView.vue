@@ -63,7 +63,7 @@ const redraw = () => {
 		ind++;
 
 	}
-	console.log(`cells count: ${cells.length}`);
+
 	mapCells.value = cells;
 
 	//console.timeEnd('draw');

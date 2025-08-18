@@ -28,7 +28,7 @@ const { width, height } = useElementSize(svgEl);
 		 :viewBox="`${-(0.5 * width / scale) - tx} ${-(0.5 * height) / scale - ty} ${width / scale} ${height / scale}`">
 
 		<path v-for="(cell, ind) in cells" :d="cell.data" :key="ind"
-			  :fill="cell.pt.biome.color"
+			  :fill="cell.pt.biome.color" stroke="gray" stroke-opacity="0.1" stroke-width="2"
 			  @mouseover="emit('cellOver', cell.pt, $event)" />
 	</svg>
 </template>
