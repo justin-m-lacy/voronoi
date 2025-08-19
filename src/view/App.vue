@@ -4,8 +4,7 @@ import BiomeEditor from '@/view/panes/BiomeEditor.vue';
 import MapSettings from '@/view/panes/MapSettings.vue';
 import TileInfo from '@/view/TileInfo.vue';
 import { Biomes } from '@/world/biomes';
-import { MapPoint } from '@/world/mapgen';
-import { WorldMap } from '@/world/world-map';
+import { MapPoint, WorldMap } from '@/world/world-map';
 import { useEventListener } from '@vueuse/core';
 
 const world = new WorldMap({

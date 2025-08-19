@@ -1,6 +1,5 @@
 import { sampler } from '@/world/sampler';
 import alea from 'alea';
-import { createNoise2D } from 'simplex-noise';
 import RawBiomeData from '../data/biomes.json';
 
 type RawBiomeData = {
@@ -63,7 +62,7 @@ export const ParseBiomes = async () => {
  * @param temp 
  * @param rain 
  */
-export const MatchBiome = (temp: number, rain: number, elevation: number = 0) => {
+export const MatchBiome = (temp: number, rain: number, elevation: number = 1) => {
 
 	let best: number = Infinity;
 	let biome: BiomeData = Biomes['forest']!;
@@ -89,7 +88,7 @@ export function buildSamplers(seed: string | Uint8Array) {
 	return {
 		temp: sampler({ seed: seed + 'temp', min: MinTemp, max: MaxTemp, scale: 1200 }),
 		rain: sampler({ seed: seed + 'rain', min: MinRain, max: MaxRain, scale: 1500 }),
-		elev: createNoise2D(alea(seed + 'elev')),
+		elev: sampler({ seed: seed + 'elev', min: 0.5, max: 8, scale: 1600 }),
 		points: alea(seed + 'pts')
 	}
 

@@ -2,7 +2,7 @@ import { BiomeData, BiomeSampler, buildSamplers, MatchBiome } from '@/world/biom
 import { genPoints, TPoint } from '@/world/mapgen';
 import { Delaunay, Voronoi } from 'd3-delaunay';
 
-export type MapPoint = TPoint & { biome: BiomeData };
+export type MapPoint = TPoint & { biome: BiomeData, elev: number, temp: number, rain: number };
 
 export type TRange = { xmin: number, xmax: number, ymin: number, ymax: number };
 
@@ -23,9 +23,6 @@ export class WorldMap {
 	range: TRange;
 
 	delaunay: Delaunay<MapPoint>;
-
-	get maxWidth() { return this.range.xmax - this.range.xmin }
-	get maxHeight() { return this.range.ymax - this.range.ymin }
 
 	get voronoi() {
 		return this._voronoi ??= this.delaunay.voronoi()
@@ -93,10 +90,11 @@ export class WorldMap {
 
 		for (const p of this.points.values()) {
 
-			const elev = rands.elev(p.x, p.y);
-			const temp = rands.temp(p.x, p.y);
-			const rain = rands.rain(p.x, p.y);
-			p.biome = MatchBiome(temp, rain, elev);
+			p.elev = rands.elev(p.x, p.y);
+			p.temp = rands.temp(p.x, p.y) / (0.2 * p.elev);
+			p.rain = rands.rain(p.x, p.y) / p.elev;
+
+			p.biome = MatchBiome(p.temp, p.rain, p.elev);
 
 		}
 

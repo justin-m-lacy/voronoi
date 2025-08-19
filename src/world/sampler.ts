@@ -10,7 +10,7 @@ export const sampler = ({ seed, min = -1, max = 1, scale = 1 }: { seed: string, 
 
 	// local const is necessary.
 	const func = function s(x: number, y: number) {
-		s.a + s.b * s.f(x / s.scale, y / s.scale);
+		return s.a + s.b * s.f(x / s.scale, y / s.scale);
 	}
 	// avoid function closure.
 	func.a = 0.5 * (max + min);

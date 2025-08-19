@@ -3,13 +3,13 @@
         "id": "forest",
         "temp": 60,
         "rain": 100,
-        "color": "#25a01c"
+        "color": "#266921"
     },
     {
         "id": "plains",
         "temp": 50,
         "rain": 50,
-        "color": "#dbd64a"
+        "color": "#8cc256"
     },
     {
         "id": "tundra",
@@ -33,7 +33,7 @@
         "id": "desert",
         "temp": 75,
         "rain": 12,
-        "color": "#d1c349"
+        "color": "#e8c82c"
     },
     {
         "id": "arctic",
@@ -51,12 +51,14 @@
         "id": "mountains",
         "temp": 40,
         "rain": 50,
-        "color": "#9c9fa3"
+        "elev": 5000,
+        "color": "#656c76"
     },
     {
         "id": "swamp",
         "temp": 70,
         "rain": 150,
+        "elev": 100,
         "color": "#68997e"
     }
 ]

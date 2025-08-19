@@ -1,12 +1,10 @@
-import { BiomeData, buildSamplers, ParseBiomes } from '@/world/biomes';
-import { TRange } from '@/world/world-map';
+import { buildSamplers, ParseBiomes } from '@/world/biomes';
+import { MapPoint, TRange } from '@/world/world-map';
 import { Delaunay } from 'd3-delaunay';
 
 // delauney mapgen modified from redblobgames
 export type TMap = ReturnType<typeof BuildMap>;
 export type TPoint = { x: number, y: number }
-
-export type MapPoint = TPoint & { biome: BiomeData };
 
 ParseBiomes();
 
@@ -51,7 +49,6 @@ export function genPoints<T extends TPoint>(
 	const cstart = Math.floor(range.xmin / tileSize);
 	const cend = Math.floor(range.xmax / tileSize);
 
-	console.log(`row: ${rstart}->${rend}  col: ${cstart}->${cend}`)
 	// stores points in consecutive x,y coods.
 	for (let row = rstart; row <= rend; row++) {
 

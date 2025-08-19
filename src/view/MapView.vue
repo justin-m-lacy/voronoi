@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useViewStore } from '@/store/view-store';
 import MapSvg from '@/view/MapSvg.vue';
-import { WorldMap } from '@/world/world-map';
+import { MapPoint, WorldMap } from '@/world/world-map';
 import { useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
 import { useViewDrag } from '../../composables/view-drag';
-import { MapPoint } from '../world/mapgen';
+
 
 const props = defineProps<{
 	map: WorldMap,
