@@ -3,7 +3,7 @@ import { useOptions } from '@/store/options-store';
 import { useViewStore } from '@/store/view-store';
 import MapSvg from '@/view/MapSvg.vue';
 import { MapPoint, WorldMap } from '@/world/world-map';
-import { useEventListener } from '@vueuse/core';
+import { useDebounceFn, useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
 import { useViewDrag } from './composable/view-drag';
 
@@ -33,34 +33,47 @@ watch(() => [viewStore.tx, viewStore.ty, viewStore.scale], rebound,
 	{ immediate: false, deep: false });
 watch(() => props.redraw, rebound, { immediate: false });
 
+const growMap = useDebounceFn((bnds: { left: number, right: number, top: number, bottom: number }) => {
+	props.map.grow(bnds);
+}, 100);
+
 function rebound() {
 
 	let rect = container.value?.getBoundingClientRect();
 	if (!rect) return;
 
+	const s = 1 / (viewStore.scale);
+
+	const bounds = {
+		left: -viewStore.tx + (rect.left - rect.width / 2) * s,
+		right: -viewStore.tx + (rect.right - rect.width / 2) * s,
+		top: -viewStore.ty + (rect.top - rect.height / 2) * s,
+		bottom: -viewStore.ty + (rect.bottom - rect.height / 2) * s
+	}
+
 	if (options.opts.autoFillView) {
-		props.map.grow(rect);
+		growMap(bounds);
 	}
 
 	props.map.updateVoronoi();
 
-	redraw();
+	redraw(bounds);
 
 }
 
-const redraw = () => {
+const redraw = (bnds?: { left: number, right: number, top: number, bottom: number }) => {
 
 	//console.time('draw');
-
 	const mapPts = props.map.points;
 
 	const vor = props.map.voronoi;
 	const cells: { pt: MapPoint, data: string }[] = [];
 
-	vor.xmin = props.map.bounds.left;
-	vor.xmax = props.map.bounds.right
-	vor.ymin = props.map.bounds.top
-	vor.ymax = props.map.bounds.bottom
+	bnds ??= props.map.bounds;
+	vor.xmin = bnds.left;
+	vor.xmax = bnds.right
+	vor.ymin = bnds.top
+	vor.ymax = bnds.bottom
 
 	let ind = 0;
 	for (const p of mapPts.values()) {
