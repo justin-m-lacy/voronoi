@@ -2,3 +2,7 @@
 
 /* Plugins */
 @plugin '@tailwindcss/forms';
+
+@theme {
+	--z-index-100:100;
+}

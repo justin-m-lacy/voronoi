@@ -41,7 +41,7 @@ const fileDrag = (e: DragEvent) => {
 
 </script>
 <template>
-	<MergePopup v-if="showMerge" @close="showMerge = false" />
+	<!--<MergePopup v-if="showMerge" @close="showMerge = false" />-->
 	<div class="h-min w-full px-4 bg-slate-900 text-slate-100
 		flex gap-x-6 py-0.5"
 		 v-bind="$attrs">

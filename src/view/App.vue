@@ -60,14 +60,14 @@ useEventListener('keydown', (evt => {
 <template>
 
 	<div class="w-full h-full flex justify-end overflow-hidden">
-		<Header />
+		<Header class="z-100" />
 		<MapView v-if="world" class="absolute w-full h-full z-0 overflow-hidden"
 				 :map="world" :redraw="redraw"
 				 @cellOver="onCellOver" />
 
-		<TileInfo class="z-10" v-if="rollInfo" :data="rollInfo.data" :at="rollInfo.at" />
+		<TileInfo class="z-50" v-if="rollInfo" :data="rollInfo.data" :at="rollInfo.at" />
 
-		<div class="flex flex-col z-10 min-w-20 bg-white/80">
+		<div class="flex flex-col justify-stretch min-h-full h-screen z-10 min-w-20 p-2 bg-white/75">
 			<MapSettings :map="world" />
 			<BiomeEditor :biomes="biomeStore.biomes" @changed="onBiomeChange" />
 		</div>
