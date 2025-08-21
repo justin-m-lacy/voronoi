@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useBiomeStore } from '@/store/biome-store';
+import { useOptions } from '@/store/options-store';
 import Header from '@/view/Header.vue';
 import MapView from '@/view/MapView.vue';
 import BiomeEditor from '@/view/panes/BiomeEditor.vue';
@@ -19,10 +20,10 @@ onBeforeMount(async () => {
 	world.value = new WorldMap({
 		seed: 'testmap',
 		range: {
-			xmin: -window.innerWidth / 2,
-			xmax: window.innerWidth / 2,
-			ymin: -window.innerHeight / 2,
-			ymax: window.innerHeight / 2
+			left: -window.innerWidth / 2,
+			right: window.innerWidth / 2,
+			top: -window.innerHeight / 2,
+			bottom: window.innerHeight / 2
 		},
 		tileSize: 72,
 
@@ -30,6 +31,9 @@ onBeforeMount(async () => {
 
 
 });
+
+const options = useOptions();
+
 
 const redraw = ref(0);
 const rollInfo = shallowRef<{

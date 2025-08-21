@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { useOptions } from '@/store/options-store';
 import { useViewStore } from '@/store/view-store';
 import MapSvg from '@/view/MapSvg.vue';
 import { MapPoint, WorldMap } from '@/world/world-map';
 import { useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
 import { useViewDrag } from './composable/view-drag';
-
 
 const props = defineProps<{
 	map: WorldMap,
@@ -18,6 +18,8 @@ const emit = defineEmits<{
 
 const container = shallowRef<HTMLElement>();
 const viewStore = useViewStore();
+
+const options = useOptions();
 
 /**
  * Data of each map tile.
@@ -33,15 +35,14 @@ watch(() => props.redraw, rebound, { immediate: false });
 
 function rebound() {
 
-	const rect = container.value?.getBoundingClientRect();
+	let rect = container.value?.getBoundingClientRect();
 	if (!rect) return;
 
-	const vor = props.map.voronoi;
+	if (options.opts.autoFillView) {
+		props.map.grow(rect);
+	}
 
-	vor.xmin = props.map.range.xmin;
-	vor.xmax = props.map.range.xmax;
-	vor.ymin = props.map.range.ymin;
-	vor.ymax = props.map.range.ymax;
+	props.map.updateVoronoi();
 
 	redraw();
 
@@ -55,6 +56,11 @@ const redraw = () => {
 
 	const vor = props.map.voronoi;
 	const cells: { pt: MapPoint, data: string }[] = [];
+
+	vor.xmin = props.map.bounds.left;
+	vor.xmax = props.map.bounds.right
+	vor.ymin = props.map.bounds.top
+	vor.ymax = props.map.bounds.bottom
 
 	let ind = 0;
 	for (const p of mapPts.values()) {
@@ -91,7 +97,7 @@ const onCellOver = (data: MapPoint, evt: MouseEvent) => {
 useEventListener(window, 'resize', rebound);
 
 onMounted(() => {
-	rebound();
+	redraw();
 });
 </script>
 <template>
