@@ -1,7 +1,7 @@
 [
     {
         "id": "forest",
-        "temp": 60,
+        "temp": 65,
         "rain": 100,
         "color": "#266921"
     },

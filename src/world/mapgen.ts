@@ -1,12 +1,10 @@
-import { buildSamplers, ParseBiomes } from '@/world/biomes';
+import { buildSamplers } from '@/world/biomes';
 import { MapPoint, TRange } from '@/world/world-map';
 import { Delaunay } from 'd3-delaunay';
 
 // delauney mapgen modified from redblobgames
 export type TMap = ReturnType<typeof BuildMap>;
 export type TPoint = { x: number, y: number }
-
-ParseBiomes();
 
 export function BuildMap({ seed, width, height, tileSize = 1 }: { seed: string, tileSize?: number, width: number, height: number }) {
 

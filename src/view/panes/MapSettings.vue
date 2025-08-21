@@ -2,7 +2,7 @@
 import { WorldMap } from '@/world/world-map';
 
 const props = defineProps<{
-	map: WorldMap
+	map?: WorldMap | null
 }>();
 
 const emit = defineEmits<{
@@ -15,7 +15,7 @@ function copySeed(str: string) {
 }
 </script>
 <template>
-	<div class="flex flex-col text-sm shrink">
+	<div v-if="map" class="flex flex-col text-sm shrink">
 
 		<div class="flex gap-x-2 text-sm">
 			<span>seed:</span><span @click="copySeed(map.seed)">{{ map.seed }}</span>

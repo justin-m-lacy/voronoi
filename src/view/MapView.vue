@@ -4,7 +4,7 @@ import MapSvg from '@/view/MapSvg.vue';
 import { MapPoint, WorldMap } from '@/world/world-map';
 import { useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
-import { useViewDrag } from '../../composables/view-drag';
+import { useViewDrag } from './composable/view-drag';
 
 
 const props = defineProps<{

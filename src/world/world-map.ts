@@ -1,4 +1,5 @@
-import { BiomeData, BiomeSampler, buildSamplers, MatchBiome } from '@/world/biomes';
+import { useBiomeStore } from '@/store/biome-store';
+import { BiomeData, BiomeSampler, buildSamplers } from '@/world/biomes';
 import { genPoints, TPoint } from '@/world/mapgen';
 import { Delaunay, Voronoi } from 'd3-delaunay';
 
@@ -88,13 +89,16 @@ export class WorldMap {
 
 		genPoints<MapPoint>(rands.points, range, tileSize, this.points);
 
+		// todo: use builder object instead.
+		const biomes = useBiomeStore();
+
 		for (const p of this.points.values()) {
 
 			p.elev = rands.elev(p.x, p.y);
 			p.temp = rands.temp(p.x, p.y) / (0.2 * p.elev);
 			p.rain = rands.rain(p.x, p.y) / p.elev;
 
-			p.biome = MatchBiome(p.temp, p.rain, p.elev);
+			p.biome = biomes.matchBiome(p.temp, p.rain, p.elev);
 
 		}
 

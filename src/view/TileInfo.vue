@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { positionElm } from '@/util/dom';
 import { MapPoint } from '@/world/world-map';
+import { precise } from '../util/format';
 
 const props = defineProps<{
 	data: MapPoint,
@@ -19,11 +20,11 @@ watch(() => props.at, (at) => {
 </script>
 <template>
 	<div ref="elRef"
-		 class="absolute w-40 h-20 p-1
-			bg-gray-200 border rounded-xs">
+		 class="absolute w-40 min-h-20 p-1
+			bg-gray-200 border text-xs rounded-xs">
 		<div class="flex">{{ data.biome.id }}</div>
-		<div>Temp: {{ data.temp }}</div>
-		<div>Rain: {{ data.rain }}</div>
-		<div>Elev: {{ data.elev }}</div>
+		<div>Temp: {{ precise(data.temp) }}</div>
+		<div>Rain: {{ precise(data.rain) }}</div>
+		<div>Elev: {{ precise(data.elev) }}</div>
 	</div>
 </template>
