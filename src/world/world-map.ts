@@ -3,7 +3,9 @@ import { BiomeData, BiomeSampler, buildSamplers } from '@/world/biomes';
 import { TPoint } from '@/world/mapgen';
 import { Delaunay, Voronoi } from 'd3-delaunay';
 
-export type MapPoint = TPoint & { biome: BiomeData, elev: number, temp: number, rain: number };
+export type MapPoint = TPoint & {
+	biome: BiomeData, elev: number, temp: number, rain: number
+};
 
 export interface TBounds { left: number, right: number, top: number, bottom: number };
 
@@ -60,12 +62,12 @@ export class WorldMap {
 
 	}
 
-	constructor({ seed, range, tileSize = 1 }: { seed: string, tileSize?: number, range: TBounds }) {
+	constructor({ seed, bounds, tileSize = 24 }: { seed: string, tileSize?: number, bounds: TBounds }) {
 
 		this.tileSize = tileSize;
 		this.seed = seed;
 
-		this.bounds = range;
+		this.bounds = bounds;
 
 		this.rands = buildSamplers(seed);
 
@@ -81,11 +83,15 @@ export class WorldMap {
 	 */
 	grow(rect: TBounds) {
 
-		const prev = this.bounds;
-		this.bounds = rect;
-		if (rect.left == prev.left && rect.right == prev.right
-			&& rect.top == prev.top && rect.bottom == prev.bottom
+		const cur = this.bounds;
+		if (rect.left == cur.left && rect.right == cur.right
+			&& rect.top == cur.top && rect.bottom == cur.bottom
 		) return;
+
+		cur.left = rect.left;
+		cur.right = rect.right;
+		cur.top = rect.top;
+		cur.bottom = rect.bottom;
 
 		this.fillPoints();
 		this.updatePointData();
@@ -93,9 +99,20 @@ export class WorldMap {
 	}
 
 	/**
+	 * Rebuild entire map with new points and points data.
+	 * Seed is not changed.
+	 */
+	rebuild() {
+
+		this.points.clear();
+		this.fillPoints();
+		this.updatePointData();
+
+	}
+
+	/**
 	 * Fill any points missing from the current map.
-	 * Existing points are NOT updated with new properties
-	 * if random maps have changed.
+	 * Existing points NOT updated with new properties or positions.
 	 * @returns 
 	 */
 	private fillPoints() {
@@ -155,13 +172,21 @@ export class WorldMap {
 
 	}
 
-	randomize() {
+	/**
+	 * Redraw map with current bounds using new seed data.
+	 */
+	reseed(seed: string) {
 
-		this.seed = btoa(
-			String.fromCharCode(...window.crypto.getRandomValues(new Uint8Array(64))));
+		this.seed = seed;
 		this.rands = buildSamplers(this.seed);
 		this.updatePointData();
 
+	}
+
+	randomize() {
+		this.reseed(btoa(
+			String.fromCharCode(...window.crypto.getRandomValues(new Uint8Array(64)))
+		));
 	}
 
 	/**

@@ -1,15 +1,15 @@
 <script setup lang="ts">
+import { useBuildStore } from '@/store/build-store';
 import { useOptions } from '@/store/options-store';
 import { useViewStore } from '@/store/view-store';
 import MapSvg from '@/view/MapSvg.vue';
-import { MapPoint, WorldMap } from '@/world/world-map';
+import { MapPoint, TBounds, WorldMap } from '@/world/world-map';
 import { useDebounceFn, useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
 import { useViewDrag } from './composable/view-drag';
 
 const props = defineProps<{
-	map: WorldMap,
-	redraw: number
+	map: WorldMap
 }>();
 
 const emit = defineEmits<{
@@ -18,8 +18,15 @@ const emit = defineEmits<{
 
 const container = shallowRef<HTMLElement>();
 const viewStore = useViewStore();
-
+const buildStore = useBuildStore();
 const options = useOptions();
+
+const viewBounds: TBounds = {
+	left: props.map.bounds.left,
+	right: props.map.bounds.right,
+	top: props.map.bounds.top,
+	bottom: props.map.bounds.bottom,
+};
 
 /**
  * Data of each map tile.
@@ -31,7 +38,10 @@ useViewDrag(container, viewStore);
 
 watch(() => [viewStore.tx, viewStore.ty, viewStore.scale], rebound,
 	{ immediate: false, deep: false });
-watch(() => props.redraw, rebound, { immediate: false });
+watch(() => buildStore.changed, (v) => {
+	console.log(`build: ${v}`)
+	rebound()
+}, { immediate: false });
 
 const growMap = useDebounceFn((bnds: { left: number, right: number, top: number, bottom: number }) => {
 	props.map.grow(bnds);
@@ -39,29 +49,32 @@ const growMap = useDebounceFn((bnds: { left: number, right: number, top: number,
 
 function rebound() {
 
-	let rect = container.value?.getBoundingClientRect();
-	if (!rect) return;
+	if (!container.value) return;
 
-	const s = 1 / (viewStore.scale);
-
-	const bounds = {
-		left: -viewStore.tx + (rect.left - rect.width / 2) * s,
-		right: -viewStore.tx + (rect.right - rect.width / 2) * s,
-		top: -viewStore.ty + (rect.top - rect.height / 2) * s,
-		bottom: -viewStore.ty + (rect.bottom - rect.height / 2) * s
-	}
+	const bounds = viewStore.getBounds(container.value, viewBounds);
 
 	if (options.opts.autoFillView) {
-		growMap(bounds);
+
+		console.log(`autofill bounds`);
+		buildStore.bounds = bounds;
+
+	} else {
+
+		const mapBounds = props.map.bounds;
+		bounds.left = Math.max(mapBounds.left, bounds.left);
+		bounds.right = Math.min(mapBounds.right, bounds.right);
+		bounds.top = Math.max(mapBounds.top, bounds.top);
+		bounds.bottom = Math.min(mapBounds.bottom, bounds.bottom);
+
 	}
 
 	props.map.updateVoronoi();
 
-	redraw(bounds);
+	redraw();
 
 }
 
-const redraw = (bnds?: { left: number, right: number, top: number, bottom: number }) => {
+function redraw() {
 
 	//console.time('draw');
 	const mapPts = props.map.points;
@@ -69,11 +82,10 @@ const redraw = (bnds?: { left: number, right: number, top: number, bottom: numbe
 	const vor = props.map.voronoi;
 	const cells: { pt: MapPoint, data: string }[] = [];
 
-	bnds ??= props.map.bounds;
-	vor.xmin = bnds.left;
-	vor.xmax = bnds.right
-	vor.ymin = bnds.top
-	vor.ymax = bnds.bottom
+	vor.xmin = viewBounds.left;
+	vor.xmax = viewBounds.right
+	vor.ymin = viewBounds.top;
+	vor.ymax = viewBounds.bottom;
 
 	let ind = 0;
 	for (const p of mapPts.values()) {
@@ -115,8 +127,8 @@ onMounted(() => {
 </script>
 <template>
 	<div ref="container" class="w-full h-full" @wheel.prevent="onWheel">
-		<MapSvg :cells="mapCells" :tx="viewStore.tx" :ty="viewStore.ty" :scale="viewStore.scale"
-				@cellOver="onCellOver" />
+		<MapSvg :cells="mapCells" :tx="viewStore.tx" :ty="viewStore.ty"
+				:scale="viewStore.scale" @cellOver="onCellOver" />
 	</div>
 
 </template>

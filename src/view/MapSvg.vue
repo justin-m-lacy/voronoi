@@ -2,7 +2,7 @@
 import { MapPoint } from '@/world/world-map';
 import { useElementSize } from '@vueuse/core';
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
 	cells: Array<{ pt: MapPoint, data: string }>,
 	tx?: number,
 	ty?: number,

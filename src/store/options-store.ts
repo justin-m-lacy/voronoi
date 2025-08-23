@@ -8,7 +8,7 @@ export const useOptions = defineStore('options', () => {
 		/**
 		 * automatically generate new tiles to fill screen.
 		 */
-		autoFillView: true
+		autoFillView: false
 
 	}, {
 		deep: false,
@@ -16,7 +16,6 @@ export const useOptions = defineStore('options', () => {
 		mergeDefaults: true
 	});
 
-	opts.value.autoFillView = true;
 	return { opts };
 
 })
