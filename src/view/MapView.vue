@@ -38,10 +38,7 @@ useViewDrag(container, viewStore);
 
 watch(() => [viewStore.tx, viewStore.ty, viewStore.scale], rebound,
 	{ immediate: false, deep: false });
-watch(() => buildStore.changed, (v) => {
-	console.log(`build: ${v}`)
-	rebound()
-}, { immediate: false });
+watch(() => buildStore.changed, rebound, { immediate: false });
 
 const growMap = useDebounceFn((bnds: { left: number, right: number, top: number, bottom: number }) => {
 	props.map.grow(bnds);

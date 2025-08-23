@@ -13,8 +13,9 @@ const emit = defineEmits<{
 const build = useBuildStore();
 
 function fillView() {
-
+	build.fillView();
 }
+
 function updateSize(evt: Event) {
 
 	const tileSize = Number((evt.target as HTMLInputElement).value);
@@ -27,7 +28,7 @@ function updateSize(evt: Event) {
 }
 
 function randomize() {
-	props.map?.randomize();
+	build.randomize();
 }
 
 function copySeed(str: string) {

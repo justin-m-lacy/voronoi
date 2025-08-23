@@ -1,3 +1,4 @@
+import { useViewStore } from '@/store/view-store';
 import { WorldMap } from '@/world/world-map';
 import { defineStore } from 'pinia';
 
@@ -9,6 +10,10 @@ type TBounds = WorldMap['bounds'];
 export const useBuildStore = defineStore('build', () => {
 
 	const seed = shallowRef<string>('testmap');
+
+	const tileSize = shallowRef<number>(64);
+
+	const map = shallowRef<WorldMap>();
 
 	/**
 	 * watch for changes in current map.
@@ -26,20 +31,30 @@ export const useBuildStore = defineStore('build', () => {
 		bottom: window.innerHeight / 2
 	});
 
-	const tileSize = shallowRef<number>(64);
-
-	const map = shallowRef<WorldMap>();
-
 	/**
 	 * Generate new map with current build values.
 	 */
 	function buildMap() {
-		return map.value = new WorldMap({ seed: seed.value, bounds: bounds, tileSize: tileSize.value });
+		return map.value = new WorldMap({
+			seed: seed.value,
+			bounds: bounds,
+			tileSize: tileSize.value
+		});
 	}
 
 	function randomize() {
 		map.value!.randomize();
 		changed.value++;
+	}
+
+	function fillView() {
+
+		const view = useViewStore().getBounds();
+		bounds.left = view.left;
+		bounds.right = view.right;
+		bounds.top = view.top;
+		bounds.bottom = view.bottom;
+
 	}
 
 	watch(seed, (newSeed, oldSeed) => {
@@ -71,6 +86,7 @@ export const useBuildStore = defineStore('build', () => {
 
 	return {
 
+		fillView,
 		buildMap,
 		changed,
 		seed,
