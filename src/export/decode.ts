@@ -1,5 +1,4 @@
-import { TPoint, type PointData, type TCluster } from "@/types/geom";
-import { NextId } from "@/util/data";
+import { TPoint } from '@/world/point';
 
 export function decodeAll(ptsData: any, clusterData: any) {
 

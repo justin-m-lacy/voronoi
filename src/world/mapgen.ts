@@ -1,7 +1,5 @@
+import { TPoint } from '@/world/point';
 import { TBounds } from '@/world/world-map';
-
-// delauney mapgen modified from redblobgames
-export type TPoint = { x: number, y: number }
 
 export function genPoints<T extends TPoint>(
 	rand: () => number, range: TBounds, tileSize: number,

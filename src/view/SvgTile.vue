@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MapPoint } from '@/world/mapgen';
+import { MapPoint } from '@/world/point';
 
 const props = defineProps<{
 	point: MapPoint

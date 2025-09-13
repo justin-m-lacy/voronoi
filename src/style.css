@@ -6,3 +6,20 @@
 @theme {
 	--z-index-100:100;
 }
+
+@layer components {
+
+	input[type=number]::-webkit-inner-spin-button, 
+	input[type=number]::-webkit-outer-spin-button { 
+	  -webkit-appearance: none; 
+	  margin: 0; 
+	}
+
+	input[type=number]{
+		-moz-appearance: textfield;
+		@apply border-none outline-none paper
+		placeholder:text-amber-950 placeholder:text-opacity-60
+		text-amber-950;
+	  }
+	
+}

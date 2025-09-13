@@ -7,7 +7,7 @@ import MapView from '@/view/MapView.vue';
 import BiomeEditor from '@/view/panes/BiomeEditor.vue';
 import MapSettings from '@/view/panes/MapSettings.vue';
 import TileInfo from '@/view/TileInfo.vue';
-import { MapPoint } from '@/world/world-map';
+import { MapPoint } from '@/world/point';
 import { useEventListener } from '@vueuse/core';
 
 const options = useOptions();

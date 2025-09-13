@@ -1,13 +1,11 @@
-import { parseClusters, parsePoints } from "@/export/decode";
-import { encodeClusters, encodePoints } from "@/export/encode";
-import type { TCluster, TPoint } from "@/types/geom";
-import { ResetIds } from "@/util/data";
+import { parsePoints } from "@/export/decode";
+import { encodePoints } from "@/export/encode";
+import { TPoint } from "@/world/point";
 import type { Serializer } from "@vueuse/core";
 
 export type AppData = {
 
-	points: Map<string, TPoint>,
-	clusters: Map<string, TCluster>
+	points: Map<string, TPoint>
 }
 
 export function PointSerializer(): Serializer<AppData> {
@@ -23,7 +21,6 @@ export function PointSerializer(): Serializer<AppData> {
 
 			return {
 				points,
-				clusters: parseClusters(raw.clusters, points),
 			};
 
 		},
@@ -31,7 +28,6 @@ export function PointSerializer(): Serializer<AppData> {
 
 			return JSON.stringify({
 				points: encodePoints(data.points),
-				clusters: encodeClusters(data.clusters, data.points)
 			});
 
 		}

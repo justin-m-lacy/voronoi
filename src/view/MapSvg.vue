@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MapPoint } from '@/world/world-map';
+import { MapPoint } from '@/world/point';
 import { useElementSize } from '@vueuse/core';
 
 withDefaults(defineProps<{
