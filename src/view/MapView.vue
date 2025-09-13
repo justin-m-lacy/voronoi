@@ -3,7 +3,8 @@ import { useBuildStore } from '@/store/build-store';
 import { useOptions } from '@/store/options-store';
 import { useViewStore } from '@/store/view-store';
 import MapSvg from '@/view/MapSvg.vue';
-import { MapPoint, TBounds, WorldMap } from '@/world/world-map';
+import { MapPoint } from '@/world/point';
+import { TBounds, WorldMap } from '@/world/world-map';
 import { useDebounceFn, useEventListener } from '@vueuse/core';
 import { onMounted } from 'vue';
 import { useViewDrag } from './composable/view-drag';
@@ -52,7 +53,6 @@ function rebound() {
 
 	if (options.opts.autoFillView) {
 
-		console.log(`autofill bounds`);
 		buildStore.bounds = bounds;
 
 	} else {

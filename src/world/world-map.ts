@@ -1,20 +1,16 @@
-import { useBiomeStore } from '@/store/biome-store';
-import { BiomeData, BiomeSampler, buildSamplers } from '@/world/biomes';
-import { TPoint } from '@/world/mapgen';
+import { BiomeSampler, buildSamplers } from '@/world/biomes';
+import { Block, TileRange } from '@/world/block';
+import { MapPoint } from '@/world/point';
 import { Delaunay, Voronoi } from 'd3-delaunay';
-
-export type MapPoint = TPoint & {
-	biome: BiomeData, elev: number, temp: number, rain: number
-};
 
 export interface TBounds { left: number, right: number, top: number, bottom: number };
 
-type TileRange = {
-	rstart: number, rend: number,
-	cstart: number, cend: number
-}
+const BlockRows = 10;
+const BlockCols = 10;
 
 export class WorldMap {
+
+	readonly blocks: Map<string, Block> = new Map();
 
 	/**
 	 * Maps "x,y" coordinates to a cell-point near x,y.
@@ -28,6 +24,9 @@ export class WorldMap {
 
 	rands: BiomeSampler;
 
+	/**
+	 * bounds of current view.
+	 */
 	bounds: TBounds;
 
 	private delaunay?: Delaunay<MapPoint>;
@@ -53,10 +52,10 @@ export class WorldMap {
 	private getTileRange(): TileRange {
 
 		return {
-			rstart: Math.floor(this.bounds.top / this.tileSize),
-			rend: Math.floor(this.bounds.bottom / this.tileSize),
-			cstart: Math.floor(this.bounds.left / this.tileSize),
-			cend: Math.floor(this.bounds.right / this.tileSize),
+			rowStart: Math.floor(this.bounds.top / this.tileSize),
+			rowEnd: Math.floor(this.bounds.bottom / this.tileSize),
+			colStart: Math.floor(this.bounds.left / this.tileSize),
+			colEnd: Math.floor(this.bounds.right / this.tileSize),
 		}
 
 
@@ -71,7 +70,7 @@ export class WorldMap {
 
 		this.rands = buildSamplers(seed);
 
-		this.fillPoints();
+		this.fillDelaunay();
 		this.updatePointData();
 
 	}
@@ -93,7 +92,7 @@ export class WorldMap {
 		cur.top = rect.top;
 		cur.bottom = rect.bottom;
 
-		this.fillPoints();
+		this.fillDelaunay();
 		this.updatePointData();
 
 	}
@@ -104,9 +103,45 @@ export class WorldMap {
 	 */
 	rebuild() {
 
-		this.points.clear();
-		this.fillPoints();
+		this.fillDelaunay();
 		this.updatePointData();
+
+	}
+
+	fillBlocks(r0: number, r1: number, c0: number, c1: number) {
+
+		// block row,col
+		const lowRow = Math.floor(r0 / BlockRows);
+		const lowCol = Math.floor(c0 / BlockCols);
+
+		const highRow = Math.floor(r1 / BlockRows);
+		const highCol = Math.floor(c1 / BlockRows);
+
+		for (let r = lowRow; r <= highRow; r++) {
+
+			for (let c = lowCol; c <= highCol; c++) {
+
+				if (!this.blocks.has(r + '_' + c)) {
+
+					const b = new Block({
+						tileSize: this.tileSize,
+						range: {
+							rowStart: r * BlockRows,
+							rowEnd: (r + 1) * BlockRows,
+							colStart: c * BlockRows,
+							colEnd: (c + 1) * BlockRows,
+						}
+					});
+					this.blocks.set(r + '_' + c, b);
+					b.fillBlock(this.rands)
+
+				} else {
+					this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
+				}
+
+			}
+
+		}
 
 	}
 
@@ -115,39 +150,26 @@ export class WorldMap {
 	 * Existing points NOT updated with new properties or positions.
 	 * @returns 
 	 */
-	private fillPoints() {
+	private fillDelaunay() {
 
-		const rand = this.rands.points;
-		const pts = this.points;
-		const tileSize = this.tileSize;
-		const jitter = this.jitter;
+		const range = this.getTileRange();
 
-		const { rstart, rend, cstart, cend } = this.getTileRange();
+		const bRange = {
+			rowStart: Math.floor(range.rowEnd / BlockRows),
+			colStart: Math.floor(range.colStart / BlockCols),
 
-		// stores points in consecutive x,y coods.
-		for (let row = rstart; row <= rend; row++) {
-
-			for (let col = cstart; col <= cend; col++) {
-
-				const x = tileSize * (col + jitter * (rand() - rand()));
-				const y = tileSize * (row + jitter * (rand() - rand()));
-				if (pts.has(row + ',' + col)) continue;
-				pts.set(row + ',' + col, {
-					x, y,
-					elev: 0, temp: 0, rain: 0,
-				} as MapPoint);
-			}
-
+			rowEnd: Math.floor(range.rowEnd / BlockRows),
+			colEnd: Math.floor(range.colEnd / BlockRows)
 		}
 
-		if (!this.delaunay || this.delaunay.points.length != 2 * pts.size) {
+		const ptCount = (bRange.rowEnd - bRange.rowStart + 1) * (bRange.colEnd - bRange.colStart + 1) * BlockRows * BlockCols;
+
+		if (!this.delaunay || this.delaunay.points.length != 2 * ptCount) {
 			this._voronoi = null;
-			this.delaunay = new Delaunay(new Int32Array(2 * pts.size));
+			this.delaunay = new Delaunay(new Int32Array(2 * ptCount));
 		}
-		this.fillCoords(pts.values(), this.delaunay.points as Int32Array);
-		this.delaunay.update()
-
-		return pts;
+		this.fillCoords(bRange, this.delaunay.points as Int32Array);
+		this.delaunay.update();
 
 	}
 
@@ -156,18 +178,8 @@ export class WorldMap {
 	 */
 	private updatePointData() {
 
-		const rands = this.rands;
-		// todo: use builder object instead.
-		const biomes = useBiomeStore();
-
-		for (const p of this.points.values()) {
-
-			p.elev = rands.elev(p.x, p.y);
-			p.temp = rands.temp(p.x, p.y) / (0.2 * p.elev);
-			p.rain = rands.rain(p.x, p.y) / p.elev;
-
-			p.biome = biomes.matchBiome(p.temp, p.rain, p.elev);
-
+		for (const s of this.blocks.values()) {
+			s.updateRands(this.rands);
 		}
 
 	}
@@ -192,13 +204,21 @@ export class WorldMap {
 	/**
 	 * Fill coordinates of Delaunay point-array
 	 */
-	private fillCoords<T extends TPoint>(pts: Iterable<T>, arr: Int32Array) {
+	private fillCoords(bRange: TileRange, arr: Int32Array) {
 
 		let ind: number = 0;
-		for (const p of pts) {
-			// update delaunay points.
-			arr[ind++] = p.x;
-			arr[ind++] = p.y;
+
+		for (let r = bRange.rowStart; r <= bRange.rowEnd; r++) {
+			for (let c = bRange.colStart; c <= bRange.colEnd; c++) {
+
+				const block = this.blocks.get(r + '_' + c);
+				if (!block) continue;
+				for (const p of block.points.values()) {
+					// update delaunay points.
+					arr[ind++] = p.x;
+					arr[ind++] = p.y;
+				}
+			}
 		}
 
 	}

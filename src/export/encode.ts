@@ -1,5 +1,5 @@
-import { TPoint, type ClusterData, type PointData, type TCluster } from "@/types/geom";
 import { round } from "@/util/dom";
+import { TPoint } from "@/world/point";
 
 export const encodePoints = (points: Map<string, TPoint>) => {
 
