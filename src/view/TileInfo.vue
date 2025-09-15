@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { positionElm } from '@/util/dom';
-import { MapPoint } from '@/world/world-map';
+import { MapPoint } from '@/world/point';
 import { precise } from '../util/format';
 
 const props = defineProps<{
