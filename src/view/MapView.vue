@@ -73,8 +73,8 @@ function rebound() {
 
 function redraw() {
 
-	//console.time('draw');
-	const mapPts = props.map.points;
+	console.time('draw');
+
 
 	const vor = props.map.voronoi;
 	const cells: { pt: MapPoint, data: string }[] = [];
@@ -84,17 +84,19 @@ function redraw() {
 	vor.ymin = viewBounds.top;
 	vor.ymax = viewBounds.bottom;
 
-	let ind = 0;
-	for (const p of mapPts.values()) {
+	const pts = props.map.viewPoints;
+	for (let i = 0; i < pts.length; i++) {
 
-		cells.push({ pt: p, data: vor.renderCell(ind) });
-		ind++;
+		cells.push({ pt: pts[i], data: vor.renderCell(i) });
+		if (!vor.contains(i, pts[i].x, pts[i].y)) {
+			console.log(`Bad cell: ${i}`);
+		}
 
 	}
 
 	mapCells.value = cells;
 
-	//console.timeEnd('draw');
+	console.timeEnd('draw');
 
 }
 
@@ -119,6 +121,7 @@ const onCellOver = (data: MapPoint, evt: MouseEvent) => {
 useEventListener(window, 'resize', rebound);
 
 onMounted(() => {
+	props.map.updateVoronoi();
 	redraw();
 });
 </script>

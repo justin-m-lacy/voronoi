@@ -5,18 +5,12 @@ import { Delaunay, Voronoi } from 'd3-delaunay';
 
 export interface TBounds { left: number, right: number, top: number, bottom: number };
 
-const BlockRows = 10;
-const BlockCols = 10;
+const BlockRows = 8;
+const BlockCols = 8;
 
 export class WorldMap {
 
 	readonly blocks: Map<string, Block> = new Map();
-
-	/**
-	 * Maps "x,y" coordinates to a cell-point near x,y.
-	 * Uses a record to allow negative coordinates.
-	 */
-	readonly points: Map<string, MapPoint> = new Map();
 
 	tileSize: number;
 
@@ -40,9 +34,6 @@ export class WorldMap {
 	private _voronoi: Voronoi<MapPoint> | null = null;
 	get voronoi() {
 		return this._voronoi ??= this.delaunay!.voronoi()
-	}
-	updateVoronoi() {
-		return (this._voronoi?.update() ?? (this._voronoi = this.delaunay!.voronoi()));
 	}
 
 	/**
@@ -70,10 +61,32 @@ export class WorldMap {
 
 		this.rands = buildSamplers(seed);
 
-		this.fillDelaunay();
-		this.updatePointData();
+		this.rebuild();
 
 	}
+
+	/**
+	 * Get point with point data.
+	 * @param x 
+	 * @param y 
+	 * @returns 
+	 */
+	getPoint(x: number, y: number) {
+
+		const row = Math.floor(y / this.tileSize);
+		const col = Math.floor(x / this.tileSize);
+
+		// keep global point map?
+		return this.blocks.get(
+			Math.floor(row / BlockRows) + '_' + Math.floor(col / BlockCols)
+		)?.points.get(row + "_" + col);
+
+	}
+
+	updateVoronoi() {
+		return (this._voronoi?.update() ?? (this._voronoi = this.delaunay!.voronoi()));
+	}
+
 
 	/**
 	 * Expand map data to fill at least this area.
@@ -92,9 +105,8 @@ export class WorldMap {
 		cur.top = rect.top;
 		cur.bottom = rect.bottom;
 
-		this.fillDelaunay();
-		this.updatePointData();
-
+		// TODO: don't need to rebuild all rands here.
+		this.rebuild();
 	}
 
 	/**
@@ -104,40 +116,34 @@ export class WorldMap {
 	rebuild() {
 
 		this.fillDelaunay();
-		this.updatePointData();
+		this.updateRandData();
 
 	}
 
-	fillBlocks(r0: number, r1: number, c0: number, c1: number) {
+	private fillBlocks(range: TileRange) {
 
 		// block row,col
-		const lowRow = Math.floor(r0 / BlockRows);
-		const lowCol = Math.floor(c0 / BlockCols);
+		const lowRow = Math.floor(range.rowStart / BlockRows);
+		const lowCol = Math.floor(range.colStart / BlockCols);
 
-		const highRow = Math.floor(r1 / BlockRows);
-		const highCol = Math.floor(c1 / BlockRows);
+		const highRow = Math.floor(range.rowEnd / BlockRows);
+		const highCol = Math.floor(range.colEnd / BlockRows);
 
 		for (let r = lowRow; r <= highRow; r++) {
 
 			for (let c = lowCol; c <= highCol; c++) {
 
-				if (!this.blocks.has(r + '_' + c)) {
-
-					const b = new Block({
-						tileSize: this.tileSize,
-						range: {
-							rowStart: r * BlockRows,
-							rowEnd: (r + 1) * BlockRows,
-							colStart: c * BlockRows,
-							colEnd: (c + 1) * BlockRows,
-						}
-					});
-					this.blocks.set(r + '_' + c, b);
-					b.fillBlock(this.rands)
-
-				} else {
-					this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
-				}
+				const b = this.blocks.get(r + '_' + c) ?? new Block({
+					tileSize: this.tileSize,
+					range: {
+						rowStart: r * BlockRows,
+						rowEnd: (r + 1) * BlockRows,
+						colStart: c * BlockRows,
+						colEnd: (c + 1) * BlockRows,
+					}
+				});
+				this.blocks.set(r + '_' + c, b);
+				b.fillBlock(this.rands);
 
 			}
 
@@ -162,13 +168,18 @@ export class WorldMap {
 			colEnd: Math.floor(range.colEnd / BlockRows)
 		}
 
-		const ptCount = (bRange.rowEnd - bRange.rowStart + 1) * (bRange.colEnd - bRange.colStart + 1) * BlockRows * BlockCols;
+		this.fillBlocks(range);
+
+		const ptCount = (bRange.rowEnd - bRange.rowStart + 1) *
+			(bRange.colEnd - bRange.colStart + 1) * BlockRows * BlockCols;
 
 		if (!this.delaunay || this.delaunay.points.length != 2 * ptCount) {
 			this._voronoi = null;
 			this.delaunay = new Delaunay(new Int32Array(2 * ptCount));
 		}
-		this.fillCoords(bRange, this.delaunay.points as Int32Array);
+		console.log(`ptCount: ${ptCount}`);
+
+		this.fillCoords(bRange, this.delaunay);
 		this.delaunay.update();
 
 	}
@@ -176,7 +187,7 @@ export class WorldMap {
 	/**
 	 * compute data for all map points.
 	 */
-	private updatePointData() {
+	private updateRandData() {
 
 		for (const s of this.blocks.values()) {
 			s.updateRands(this.rands);
@@ -191,7 +202,7 @@ export class WorldMap {
 
 		this.seed = seed;
 		this.rands = buildSamplers(this.seed);
-		this.updatePointData();
+		this.updateRandData();
 
 	}
 
@@ -202,11 +213,24 @@ export class WorldMap {
 	}
 
 	/**
+	 * Points visible in bounds. These correspond in index
+	 * to the delauny graph points, with same indices.
+	 */
+	public viewPoints: MapPoint[] = [];
+
+	/**
 	 * Fill coordinates of Delaunay point-array
 	 */
-	private fillCoords(bRange: TileRange, arr: Int32Array) {
+	private fillCoords(bRange: TileRange, delaunay: Delaunay<MapPoint>) {
+
+		const arr = delaunay.points as Int32Array;
+
+		this.viewPoints.length = arr.length / 2;
 
 		let ind: number = 0;
+		let pIndex: number = 0;
+
+		console.log(`viewPoints: ${this.viewPoints.length}`);
 
 		for (let r = bRange.rowStart; r <= bRange.rowEnd; r++) {
 			for (let c = bRange.colStart; c <= bRange.colEnd; c++) {
@@ -214,9 +238,12 @@ export class WorldMap {
 				const block = this.blocks.get(r + '_' + c);
 				if (!block) continue;
 				for (const p of block.points.values()) {
+
+					this.viewPoints[pIndex++] = p;
 					// update delaunay points.
 					arr[ind++] = p.x;
 					arr[ind++] = p.y;
+
 				}
 			}
 		}
