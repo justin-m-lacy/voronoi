@@ -13,6 +13,12 @@ export const useViewStore = defineStore('canvas', () => {
 	const ty = shallowRef<number>(0);
 
 	/**
+	 * Mimics the Map view points just to make the bounds reactive.
+	 */
+	//const bounds = computed<TBounds>(() => getBounds());
+
+
+	/**
 	 * Get bounding rect of the current view.
 	 * @param targ 
 	 * @param into 
@@ -58,6 +64,7 @@ export const useViewStore = defineStore('canvas', () => {
 		setScale(s: number) { scale.value = s },
 		setPos(x: number, y: number) { tx.value = x, ty.value = y },
 		scale,
+		//bounds,
 		getBounds,
 		tx, ty,
 	}

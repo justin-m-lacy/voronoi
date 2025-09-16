@@ -6,6 +6,7 @@ import MapSvg from '@/view/MapSvg.vue';
 import { MapPoint } from '@/world/point';
 import { TBounds, WorldMap } from '@/world/world-map';
 import { useDebounceFn, useEventListener } from '@vueuse/core';
+import { Voronoi } from 'd3-delaunay';
 import { onMounted } from 'vue';
 import { useViewDrag } from './composable/view-drag';
 
@@ -23,10 +24,10 @@ const buildStore = useBuildStore();
 const options = useOptions();
 
 const viewBounds: TBounds = {
-	left: props.map.bounds.left,
-	right: props.map.bounds.right,
-	top: props.map.bounds.top,
-	bottom: props.map.bounds.bottom,
+	left: -window.innerWidth / 2,
+	right: window.innerWidth / 2,
+	top: -window.innerHeight / 2,
+	bottom: window.innerHeight / 2
 };
 
 /**
@@ -34,14 +35,18 @@ const viewBounds: TBounds = {
  */
 const mapCells = shallowRef<{ pt: MapPoint, data: string }[]>([]);
 
+const viewVoronoi = shallowRef<Voronoi | null>(null);
 
 useViewDrag(container, viewStore);
 
 watch(() => [viewStore.tx, viewStore.ty, viewStore.scale], rebound,
 	{ immediate: false, deep: false });
-watch(() => buildStore.changed, rebound, { immediate: false });
+//watch(() => buildStore.changed, rebound, { immediate: false });
 
-const growMap = useDebounceFn((bnds: { left: number, right: number, top: number, bottom: number }) => {
+const growMap = useDebounceFn((bnds: {
+	left: number,
+	right: number, top: number, bottom: number
+}) => {
 	props.map.grow(bnds);
 }, 100);
 
@@ -51,30 +56,40 @@ function rebound() {
 
 	const bounds = viewStore.getBounds(container.value, viewBounds);
 
-	if (options.opts.autoFillView) {
-
-		buildStore.bounds = bounds;
+	console.log(`VIEW left: ${bounds.left}-> ${bounds.right}`);
+	if (true || options.opts.autoFillView) {
+		//		buildStore.bounds = bounds;
 
 	} else {
-
-		const mapBounds = props.map.bounds;
-		bounds.left = Math.max(mapBounds.left, bounds.left);
-		bounds.right = Math.min(mapBounds.right, bounds.right);
-		bounds.top = Math.max(mapBounds.top, bounds.top);
-		bounds.bottom = Math.min(mapBounds.bottom, bounds.bottom);
-
 	}
-
-	props.map.updateVoronoi();
-
-	redraw();
+	props.map.rebuild(bounds);
+	viewVoronoi.value = props.map.voronoi;
 
 }
 
+watch(viewVoronoi, (vor) => {
+	//console.time('draw');
+	const cells: { pt: MapPoint, data: string }[] = [];
+
+	const pts = props.map.viewPoints;
+	for (let i = 0; i < pts.length; i++) {
+
+		cells.push({ pt: pts[i], data: vor.renderCell(i) });
+		if (!vor.contains(i, pts[i].x, pts[i].y)) {
+			console.log(`Bad cell: ${i}`);
+		}
+
+	}
+
+	mapCells.value = cells;
+
+	//console.timeEnd('draw');
+});
+
 function redraw() {
 
-	console.time('draw');
-
+	console.log(`redraw`);
+	//console.time('draw');
 
 	const vor = props.map.voronoi;
 	const cells: { pt: MapPoint, data: string }[] = [];
@@ -96,7 +111,7 @@ function redraw() {
 
 	mapCells.value = cells;
 
-	console.timeEnd('draw');
+	//console.timeEnd('draw');
 
 }
 
@@ -121,8 +136,8 @@ const onCellOver = (data: MapPoint, evt: MouseEvent) => {
 useEventListener(window, 'resize', rebound);
 
 onMounted(() => {
-	props.map.updateVoronoi();
-	redraw();
+	//viewVoronoi.value = props.map.voronoi;
+	rebound();
 });
 </script>
 <template>

@@ -1,8 +1,6 @@
 import { useViewStore } from '@/store/view-store';
-import { WorldMap } from '@/world/world-map';
+import { TBounds, WorldMap } from '@/world/world-map';
 import { defineStore } from 'pinia';
-
-type TBounds = WorldMap['bounds'];
 
 /**
  * Values and reactives for rebuilding map.
@@ -11,7 +9,7 @@ export const useBuildStore = defineStore('build', () => {
 
 	const seed = shallowRef<string>('testmap');
 
-	const tileSize = shallowRef<number>(64);
+	const tileSize = shallowRef<number>(128);
 
 	const map = shallowRef<WorldMap>();
 
@@ -21,8 +19,7 @@ export const useBuildStore = defineStore('build', () => {
 	const changed = shallowRef<number>(0);
 
 	/**
-	 * Change to set the real bounds of a generated map,
-	 * not just to change the view bounds.
+	 * Mimics the Map view points just to make the bounds reactive.
 	 */
 	const bounds: TBounds = shallowReactive({
 		left: -window.innerWidth / 2,
@@ -65,21 +62,22 @@ export const useBuildStore = defineStore('build', () => {
 
 	});
 
-	watch(bounds, (newBounds, _) => {
+	/*watch(bounds, (newBounds, _) => {
 
+		console.log(`BOUDNS CHANGED`);
 		map.value!.bounds = newBounds;
 		map.value!.rebuild();
 
 		changed.value++;
 
-	});
+	}, { deep: true });*/
 
 	watch(tileSize, (newSize, oldSize) => {
 
 		if (newSize == oldSize) return;
 
 		map.value!.tileSize = newSize;
-		map.value!.rebuild();
+		map.value!.rebuild(bounds);
 		changed.value++;
 
 	});
@@ -90,8 +88,8 @@ export const useBuildStore = defineStore('build', () => {
 		buildMap,
 		changed,
 		seed,
-		bounds,
 		tileSize,
+		bounds,
 		randomize,
 		map
 

@@ -5,8 +5,8 @@ import { Delaunay, Voronoi } from 'd3-delaunay';
 
 export interface TBounds { left: number, right: number, top: number, bottom: number };
 
-const BlockRows = 8;
-const BlockCols = 8;
+const BlockRows = 5;
+const BlockCols = 24;
 
 export class WorldMap {
 
@@ -21,7 +21,16 @@ export class WorldMap {
 	/**
 	 * bounds of current view.
 	 */
-	bounds: TBounds;
+	//bounds: TBounds;
+
+	/**
+	 * Block in range in current view. row,col bounds are inclusive.
+	 */
+	readonly viewBlock: TileRange;
+	/**
+	 * bounds of viewed blocks.
+	 */
+	readonly viewBounds: TBounds;
 
 	private delaunay?: Delaunay<MapPoint>;
 
@@ -33,35 +42,61 @@ export class WorldMap {
 
 	private _voronoi: Voronoi<MapPoint> | null = null;
 	get voronoi() {
-		return this._voronoi ??= this.delaunay!.voronoi()
+		if (this._voronoi == null) {
+			console.log(`CREATE VORONOI`);
+		}
+		const vor = this._voronoi ??= this.delaunay!.voronoi();
+		console.log(`voronoi bounds: ${this.viewBounds.left}->${this.viewBounds.right}`);
+		vor.xmin = this.viewBounds.left;
+		vor.xmax = this.viewBounds.right
+		vor.ymin = this.viewBounds.top;
+		vor.ymax = this.viewBounds.bottom;
+		return vor;
 	}
 
 	/**
-	 * Compute map tile range, rowstart, rowend, colstart,colend
+	 * Compute map tile range, [rowstart, rowend, colstart,colend]
 	 * from absolute size range.
 	 */
-	private getTileRange(): TileRange {
+	private getTileRange(bnds: TBounds): TileRange {
 
 		return {
-			rowStart: Math.floor(this.bounds.top / this.tileSize),
-			rowEnd: Math.floor(this.bounds.bottom / this.tileSize),
-			colStart: Math.floor(this.bounds.left / this.tileSize),
-			colEnd: Math.floor(this.bounds.right / this.tileSize),
+			rowStart: Math.floor(bnds.top / this.tileSize),
+			rowEnd: Math.floor(bnds.bottom / this.tileSize),
+			colStart: Math.floor(bnds.left / this.tileSize),
+			colEnd: Math.floor(bnds.right / this.tileSize),
 		}
 
 
 	}
 
-	constructor({ seed, bounds, tileSize = 24 }: { seed: string, tileSize?: number, bounds: TBounds }) {
+	constructor({ seed, bounds, tileSize = 42 }: { seed: string, tileSize?: number, bounds: TBounds }) {
 
 		this.tileSize = tileSize;
 		this.seed = seed;
 
-		this.bounds = bounds;
+		this.viewBlock = {
+			rowStart: -999,
+			rowEnd: -999,
+			colStart: -999,
+			colEnd: -999
+		}
 
+		this.viewBounds = {
+			left: bounds.left,
+			right: bounds.right,
+			top: bounds.top,
+			bottom: bounds.bottom
+		}
+		/*this.viewBlock = {
+			rowStart: Math.floor(range.rowStart / BlockRows),
+			rowEnd: Math.floor(range.rowEnd / BlockRows),
+			colStart: Math.floor(range.colStart / BlockCols),
+			colEnd: Math.floor(range.colEnd / BlockCols)
+		}*/
 		this.rands = buildSamplers(seed);
 
-		this.rebuild();
+		this.rebuild(bounds);
 
 	}
 
@@ -79,12 +114,8 @@ export class WorldMap {
 		// keep global point map?
 		return this.blocks.get(
 			Math.floor(row / BlockRows) + '_' + Math.floor(col / BlockCols)
-		)?.points.get(row + "_" + col);
+		)?.getPoint(row, col);
 
-	}
-
-	updateVoronoi() {
-		return (this._voronoi?.update() ?? (this._voronoi = this.delaunay!.voronoi()));
 	}
 
 
@@ -95,7 +126,7 @@ export class WorldMap {
 	 */
 	grow(rect: TBounds) {
 
-		const cur = this.bounds;
+		/*const cur = this.bounds;
 		if (rect.left == cur.left && rect.right == cur.right
 			&& rect.top == cur.top && rect.bottom == cur.bottom
 		) return;
@@ -103,47 +134,50 @@ export class WorldMap {
 		cur.left = rect.left;
 		cur.right = rect.right;
 		cur.top = rect.top;
-		cur.bottom = rect.bottom;
+		cur.bottom = rect.bottom;*/
 
+		console.log(`grow`);
 		// TODO: don't need to rebuild all rands here.
-		this.rebuild();
+		this.rebuild(rect);
 	}
 
 	/**
 	 * Rebuild entire map with new points and points data.
 	 * Seed is not changed.
 	 */
-	rebuild() {
+	rebuild(bounds: TBounds) {
 
-		this.fillDelaunay();
+		console.log(`rebuild: ${bounds.left}->${bounds.right}`)
+		this.fillDelaunay(bounds);
 		this.updateRandData();
 
 	}
 
-	private fillBlocks(range: TileRange) {
+	private fillBlocks(blockRange: TileRange) {
 
-		// block row,col
-		const lowRow = Math.floor(range.rowStart / BlockRows);
-		const lowCol = Math.floor(range.colStart / BlockCols);
+		const highCol = blockRange.colEnd;
 
-		const highRow = Math.floor(range.rowEnd / BlockRows);
-		const highCol = Math.floor(range.colEnd / BlockRows);
+		for (let r = blockRange.rowStart; r <= blockRange.rowEnd; r++) {
 
-		for (let r = lowRow; r <= highRow; r++) {
+			for (let c = blockRange.colStart; c <= highCol; c++) {
 
-			for (let c = lowCol; c <= highCol; c++) {
+				if (!this.blocks.has(r + '_' + c)) {
 
-				const b = this.blocks.get(r + '_' + c) ?? new Block({
-					tileSize: this.tileSize,
-					range: {
-						rowStart: r * BlockRows,
-						rowEnd: (r + 1) * BlockRows,
-						colStart: c * BlockRows,
-						colEnd: (c + 1) * BlockRows,
-					}
-				});
-				this.blocks.set(r + '_' + c, b);
-				b.fillBlock(this.rands);
+					const b = new Block({
+						tileSize: this.tileSize,
+						range: {
+							rowStart: r * BlockRows,
+							rowEnd: (r + 1) * BlockRows,
+							colStart: c * BlockCols,
+							colEnd: (c + 1) * BlockCols,
+						}
+					});
+					this.blocks.set(r + '_' + c, b);
+					b.fillBlock(this.rands)
+
+				} else {
+					this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
+				}
 
 			}
 
@@ -156,31 +190,54 @@ export class WorldMap {
 	 * Existing points NOT updated with new properties or positions.
 	 * @returns 
 	 */
-	private fillDelaunay() {
+	private fillDelaunay(bounds: TBounds) {
 
-		const range = this.getTileRange();
+		const range = this.getTileRange(bounds);
 
 		const bRange = {
-			rowStart: Math.floor(range.rowEnd / BlockRows),
-			colStart: Math.floor(range.colStart / BlockCols),
-
+			rowStart: Math.floor(range.rowStart / BlockRows),
 			rowEnd: Math.floor(range.rowEnd / BlockRows),
-			colEnd: Math.floor(range.colEnd / BlockRows)
+			colStart: Math.floor(range.colStart / BlockCols),
+			colEnd: Math.floor(range.colEnd / BlockCols)
 		}
 
-		this.fillBlocks(range);
+		this.fillBlocks(bRange);
 
 		const ptCount = (bRange.rowEnd - bRange.rowStart + 1) *
 			(bRange.colEnd - bRange.colStart + 1) * BlockRows * BlockCols;
 
 		if (!this.delaunay || this.delaunay.points.length != 2 * ptCount) {
+
 			this._voronoi = null;
 			this.delaunay = new Delaunay(new Int32Array(2 * ptCount));
 		}
-		console.log(`ptCount: ${ptCount}`);
 
-		this.fillCoords(bRange, this.delaunay);
-		this.delaunay.update();
+		if (bRange.rowStart != this.viewBlock.rowStart ||
+			bRange.rowEnd != this.viewBlock.rowEnd ||
+			bRange.colStart != this.viewBlock.colStart ||
+			bRange.colEnd != this.viewBlock.colEnd
+		) {
+
+			this.viewBounds.left = bRange.colStart * BlockCols * this.tileSize;
+			this.viewBounds.top = bRange.rowStart * BlockRows * this.tileSize;
+			// end block bounds inclusive - use end+1 for bounds.
+			this.viewBounds.right = (bRange.colEnd + 1) * BlockCols * this.tileSize;
+			this.viewBounds.bottom = (bRange.rowEnd + 1) * BlockRows * this.tileSize;
+
+			//console.log(`col change: ${this.viewBlock.colStart},${this.viewBlock.colEnd} => ${bRange.colStart},${bRange.colEnd}`);
+
+			this.viewBlock.rowStart = bRange.rowStart;
+			this.viewBlock.rowEnd = bRange.rowEnd;
+			this.viewBlock.colStart = bRange.colStart;
+			this.viewBlock.colEnd = bRange.colEnd;
+
+			//console.log(`MAKE DELAUNAY GRAPH`);
+
+			this._voronoi = null;
+			this.fillCoords(bRange, this.delaunay);
+			this.delaunay.update();
+
+		}
 
 	}
 
@@ -230,13 +287,14 @@ export class WorldMap {
 		let ind: number = 0;
 		let pIndex: number = 0;
 
-		console.log(`viewPoints: ${this.viewPoints.length}`);
-
 		for (let r = bRange.rowStart; r <= bRange.rowEnd; r++) {
 			for (let c = bRange.colStart; c <= bRange.colEnd; c++) {
 
 				const block = this.blocks.get(r + '_' + c);
-				if (!block) continue;
+				if (!block) {
+					console.warn(`missing block: ${r},${c}`);
+					continue;
+				}
 				for (const p of block.points.values()) {
 
 					this.viewPoints[pIndex++] = p;
@@ -249,6 +307,5 @@ export class WorldMap {
 		}
 
 	}
-
 
 }
