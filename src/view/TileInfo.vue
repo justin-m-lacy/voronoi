@@ -19,7 +19,7 @@ watch(() => props.at, (at) => {
 }, { immediate: true, deep: true });
 </script>
 <template>
-	<div ref="elRef" class="absolute w-32 min-h-20 p-1 px-2
+	<div ref="elRef" class="absolute w-32 min-h-20 p-1 px-2 pointer-events-none
 			bg-gray-200 border text-xs rounded-xs">
 		<div class="flex font-semibold">{{ data.biome.id }}</div>
 		<div>temp: {{ precise(data.temp) }}</div>
