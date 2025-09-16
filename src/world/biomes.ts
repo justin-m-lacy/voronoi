@@ -38,6 +38,9 @@ export type BiomeData = Required<Omit<TRawBiome, 'elev'>> & { elev?: number, col
 
 export function buildSamplers(seed: string | Uint8Array) {
 	return {
+		// x-variable in tile-point positions.
+		xVar: sampler({ seed: seed + 'xvar', min: -0.5, max: 0.5, scale: 1 }),
+		yVar: sampler({ seed: seed + 'yvar', min: -0.5, max: 0.5, scale: 1 }),
 		temp: sampler({ seed: seed + 'temp', min: MinTemp, max: MaxTemp, scale: 1200 }),
 		rain: sampler({ seed: seed + 'rain', min: MinRain, max: MaxRain, scale: 1500 }),
 		elev: sampler({ seed: seed + 'elev', min: 0.5, max: 8, scale: 1600 }),

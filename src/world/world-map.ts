@@ -5,8 +5,8 @@ import { Delaunay, Voronoi } from 'd3-delaunay';
 
 export interface TBounds { left: number, right: number, top: number, bottom: number };
 
-const BlockRows = 5;
-const BlockCols = 24;
+const BlockRows = 8;
+const BlockCols = 8;
 
 export class WorldMap {
 
@@ -176,7 +176,7 @@ export class WorldMap {
 					b.fillBlock(this.rands)
 
 				} else {
-					this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
+					//	this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
 				}
 
 			}

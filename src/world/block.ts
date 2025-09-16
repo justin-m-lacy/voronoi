@@ -13,12 +13,6 @@ export class Block {
 	tileSize: number;
 
 	/**
-	 * for each tile position, the maximum percent jitter
-	 * from normal tile position.
-	 */
-	jitter: number = 0.5;
-
-	/**
 	 * actual tile rows,cols covered by block.
 	 * end row,col NOT inclusive.
 	 */
@@ -73,10 +67,9 @@ export class Block {
 	 */
 	fillBlock(rands: BiomeSampler) {
 
-		const rand = rands.points;
+		const xvar = rands.xVar, yvar = rands.yVar;
 		const pts = this.points;
 		const tileSize = this.tileSize;
-		const jitter = this.jitter;
 
 		let colStart = this.range.colStart;
 		let colEnd = this.range.colEnd;
@@ -88,8 +81,8 @@ export class Block {
 		for (let i = 0; i < this.points.length; i++) {
 
 			pts[i] = {
-				x: tileSize * (col + jitter * (rand() - rand())),
-				y: tileSize * (row + jitter * (rand() - rand())),
+				x: tileSize * (col + xvar(col, row)),
+				y: tileSize * (row + yvar(col, row)),
 				elev: 0, temp: 0, rain: 0,
 			} as MapPoint;
 			if (col++ > colEnd) {
