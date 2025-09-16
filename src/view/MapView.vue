@@ -57,13 +57,12 @@ function rebound() {
 	const bounds = viewStore.getBounds(container.value, viewBounds);
 
 	//console.log(`VIEW left: ${bounds.left}-> ${bounds.right}`);
-	if (true || options.opts.autoFillView) {
+	if (options.opts.autoFillView) {
 		//		buildStore.bounds = bounds;
-
-	} else {
+		props.map.rebuild(bounds);
+		viewVoronoi.value = props.map.voronoi;
 	}
-	props.map.rebuild(bounds);
-	viewVoronoi.value = props.map.voronoi;
+
 
 }
 
