@@ -56,7 +56,7 @@ function rebound() {
 
 	const bounds = viewStore.getBounds(container.value, viewBounds);
 
-	console.log(`VIEW left: ${bounds.left}-> ${bounds.right}`);
+	//console.log(`VIEW left: ${bounds.left}-> ${bounds.right}`);
 	if (true || options.opts.autoFillView) {
 		//		buildStore.bounds = bounds;
 
