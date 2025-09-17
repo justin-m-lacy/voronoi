@@ -81,8 +81,8 @@ export class Block {
 		for (let i = 0; i < this.points.length; i++) {
 
 			pts[i] = {
-				x: tileSize * (col + xvar(col, row)),
-				y: tileSize * (row + yvar(col, row)),
+				x: tileSize * (col + 0.5 + xvar(col, row)),
+				y: tileSize * (row + 0.5 + yvar(col, row)),
 				elev: 0, temp: 0, rain: 0,
 			} as MapPoint;
 			if (col++ > colEnd) {

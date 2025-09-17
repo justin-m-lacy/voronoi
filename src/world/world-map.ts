@@ -42,11 +42,7 @@ export class WorldMap {
 
 	private _voronoi: Voronoi<MapPoint> | null = null;
 	get voronoi() {
-		if (this._voronoi == null) {
-			console.log(`CREATE VORONOI`);
-		}
 		const vor = this._voronoi ??= this.delaunay!.voronoi();
-		console.log(`voronoi bounds: ${this.viewBounds.left}->${this.viewBounds.right}`);
 		vor.xmin = this.viewBounds.left;
 		vor.xmax = this.viewBounds.right
 		vor.ymin = this.viewBounds.top;
@@ -88,12 +84,6 @@ export class WorldMap {
 			top: bounds.top,
 			bottom: bounds.bottom
 		}
-		/*this.viewBlock = {
-			rowStart: Math.floor(range.rowStart / BlockRows),
-			rowEnd: Math.floor(range.rowEnd / BlockRows),
-			colStart: Math.floor(range.colStart / BlockCols),
-			colEnd: Math.floor(range.colEnd / BlockCols)
-		}*/
 		this.rands = buildSamplers(seed);
 
 		this.rebuild(bounds);
@@ -125,18 +115,6 @@ export class WorldMap {
 	 * @param rect 
 	 */
 	grow(rect: TBounds) {
-
-		/*const cur = this.bounds;
-		if (rect.left == cur.left && rect.right == cur.right
-			&& rect.top == cur.top && rect.bottom == cur.bottom
-		) return;
-
-		cur.left = rect.left;
-		cur.right = rect.right;
-		cur.top = rect.top;
-		cur.bottom = rect.bottom;*/
-
-		console.log(`grow`);
 		// TODO: don't need to rebuild all rands here.
 		this.rebuild(rect);
 	}
@@ -147,9 +125,7 @@ export class WorldMap {
 	 */
 	rebuild(bounds: TBounds) {
 
-		console.log(`rebuild: ${bounds.left}->${bounds.right}`)
 		this.fillDelaunay(bounds);
-		this.updateRandData();
 
 	}
 
@@ -173,11 +149,12 @@ export class WorldMap {
 						}
 					});
 					this.blocks.set(r + '_' + c, b);
-					b.fillBlock(this.rands)
+					b.fillBlock(this.rands);
+					b.updateRands(this.rands);
 
-				} else {
-					//	this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
-				}
+				}/* else {
+					this.blocks.get(r + '_' + c)?.fillBlock(this.rands);
+				}*/
 
 			}
 
@@ -224,14 +201,10 @@ export class WorldMap {
 			this.viewBounds.right = (bRange.colEnd + 1) * BlockCols * this.tileSize;
 			this.viewBounds.bottom = (bRange.rowEnd + 1) * BlockRows * this.tileSize;
 
-			//console.log(`col change: ${this.viewBlock.colStart},${this.viewBlock.colEnd} => ${bRange.colStart},${bRange.colEnd}`);
-
 			this.viewBlock.rowStart = bRange.rowStart;
 			this.viewBlock.rowEnd = bRange.rowEnd;
 			this.viewBlock.colStart = bRange.colStart;
 			this.viewBlock.colEnd = bRange.colEnd;
-
-			//console.log(`MAKE DELAUNAY GRAPH`);
 
 			this._voronoi = null;
 			this.fillCoords(bRange, this.delaunay);
