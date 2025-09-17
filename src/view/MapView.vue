@@ -33,7 +33,7 @@ const viewBounds: TBounds = {
 /**
  * Data of each map tile.
  */
-const mapCells = shallowRef<{ pt: MapPoint, data: string }[]>([]);
+const mapCells = shallowRef<{ pt: MapPoint, data: string, valid?: boolean }[]>([]);
 
 const viewVoronoi = shallowRef<Voronoi | null>(null);
 
@@ -41,7 +41,6 @@ useViewDrag(container, viewStore);
 
 watch(() => [viewStore.tx, viewStore.ty, viewStore.scale], rebound,
 	{ immediate: false, deep: false });
-//watch(() => buildStore.changed, rebound, { immediate: false });
 
 const growMap = useDebounceFn((bnds: {
 	left: number,
@@ -56,9 +55,7 @@ function rebound() {
 
 	const bounds = viewStore.getBounds(container.value, viewBounds);
 
-	//console.log(`VIEW left: ${bounds.left}-> ${bounds.right}`);
 	if (options.opts.autoFillView) {
-		//		buildStore.bounds = bounds;
 		props.map.rebuild(bounds);
 		viewVoronoi.value = props.map.voronoi;
 	}
@@ -66,45 +63,21 @@ function rebound() {
 
 }
 
-watch(viewVoronoi, (vor) => {
-	//console.time('draw');
-	const cells: { pt: MapPoint, data: string }[] = [];
-
-	const pts = props.map.viewPoints;
-	for (let i = 0; i < pts.length; i++) {
-
-		cells.push({ pt: pts[i], data: vor.renderCell(i) });
-		if (!vor.contains(i, pts[i].x, pts[i].y)) {
-			console.log(`Bad cell: ${i}`);
-		}
-
-	}
-
-	mapCells.value = cells;
-
-	//console.timeEnd('draw');
-});
+watch(viewVoronoi, redraw);
 
 function redraw() {
 
-	console.log(`redraw`);
 	//console.time('draw');
 
 	const vor = props.map.voronoi;
-	const cells: { pt: MapPoint, data: string }[] = [];
-
-	vor.xmin = viewBounds.left;
-	vor.xmax = viewBounds.right
-	vor.ymin = viewBounds.top;
-	vor.ymax = viewBounds.bottom;
-
 	const pts = props.map.viewPoints;
+	const cells: { pt: MapPoint, data: string, valid?: boolean }[] = new Array(pts.length);
 	for (let i = 0; i < pts.length; i++) {
 
-		cells.push({ pt: pts[i], data: vor.renderCell(i) });
-		if (!vor.contains(i, pts[i].x, pts[i].y)) {
-			console.log(`Bad cell: ${i}`);
-		}
+		cells[i] = {
+			pt: pts[i], data: vor.renderCell(i),
+			valid: vor.contains(i, pts[i].x, pts[i].y)
+		};
 
 	}
 
@@ -135,8 +108,7 @@ const onCellOver = (data: MapPoint, evt: MouseEvent) => {
 useEventListener(window, 'resize', rebound);
 
 onMounted(() => {
-	//viewVoronoi.value = props.map.voronoi;
-	rebound();
+	viewVoronoi.value = props.map.voronoi;
 });
 </script>
 <template>
