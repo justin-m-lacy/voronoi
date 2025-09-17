@@ -1,5 +1,6 @@
+import { Noise } from '@/util/noise';
 import alea from 'alea';
-import { createNoise2D } from 'simplex-noise';
+//import { createNoise2D } from 'simplex-noise';
 
 /**
  * 
@@ -15,7 +16,9 @@ export const sampler = ({ seed, min = -1, max = 1, scale = 1 }: { seed: string, 
 	// avoid function closure.
 	func.a = 0.5 * (max + min);
 	func.b = 0.5 * (max - min);
-	func.f = createNoise2D(alea(seed));
+	func.noise = new Noise(alea(seed)());
+	func.f = func.noise.perlin2;
+	//func.f = createNoise2D(alea(seed));
 	func.scale = scale;
 
 	return func as any as (x: number, y: number) => number;
